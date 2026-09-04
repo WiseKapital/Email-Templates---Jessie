@@ -48,7 +48,7 @@
                 <div class="flex items-center space-x-4">
                     <span class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 shadow-sm">
                         <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> 
-                        Friday 21st – Thursday 27th
+                        Friday, August 28 – Thursday, September 3
                     </span>
                 </div>
             </div>
@@ -70,10 +70,10 @@
                     </div>
                 </div>
                 <div class="flex items-baseline gap-2">
-                    <span class="text-3xl font-extrabold text-slate-900">71.68%</span>
-                    <span class="text-xs font-medium text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full">FS Casino</span>
+                    <span class="text-3xl font-extrabold text-slate-900">27.93%</span>
+                    <span class="text-xs font-medium text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full">BigPirates</span>
                 </div>
-                <p class="text-xs text-slate-500 mt-1.5 truncate"></p>
+                <p class="text-xs text-slate-500 mt-1.5 font-mono truncate">Code: MLJSHO0831BIGPj</p>
             </div>
 
             <!-- Best Click to Open Rate (CTOR) -->
@@ -85,13 +85,13 @@
                     </div>
                 </div>
                 <div class="flex items-baseline gap-2">
-                    <span class="text-3xl font-extrabold text-slate-900">10.1%</span>
-                    <span class="text-xs font-medium text-blue-700 bg-blue-100 px-2 py-0.5 rounded-full">SweepJungle</span>
+                    <span class="text-3xl font-extrabold text-slate-900">74.5%</span>
+                    <span class="text-xs font-medium text-blue-700 bg-blue-100 px-2 py-0.5 rounded-full">Rolla</span>
                 </div>
-                <p class="text-xs text-slate-500 mt-1.5 truncate"></p>
+                <p class="text-xs text-slate-500 mt-1.5 font-mono truncate">Code: SEGUS0902ROLLj</p>
             </div>
 
-            <!-- Total Registrations (Sum: 3 + 2 + 1 = 6) -->
+            <!-- Total Registrations (Sum: 3 + 3 + 2 = 8) -->
             <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm flex flex-col">
                 <div class="flex items-center justify-between mb-3">
                     <span class="text-xs font-semibold uppercase tracking-wider text-slate-500">Total Registrations</span>
@@ -100,10 +100,10 @@
                     </div>
                 </div>
                 <div class="flex items-baseline gap-2">
-                    <span class="text-3xl font-extrabold text-slate-900">6</span>
+                    <span class="text-3xl font-extrabold text-slate-900">8</span>
                     <span class="text-xs font-medium text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full">Total Sum</span>
                 </div>
-                <p class="text-xs text-slate-500 mt-1.5 truncate">Peak: 3 (SweepJungle) · 3 campaigns</p>
+                <p class="text-xs text-slate-500 mt-1.5 truncate">Peak: 3 (TheWiseSpin & Big Pirates)</p>
             </div>
 
             <!-- Total Campaigns Analyzed -->
@@ -115,17 +115,17 @@
                     </div>
                 </div>
                 <div class="flex items-baseline gap-2">
-                    <span class="text-3xl font-extrabold text-slate-900">9</span>
+                    <span class="text-3xl font-extrabold text-slate-900">10</span>
                     <span class="text-xs font-medium text-purple-700 bg-purple-100 px-2 py-0.5 rounded-full">Analyzed</span>
                 </div>
                 <p class="text-xs text-slate-500 mt-1.5 truncate">
-                    <span class="font-semibold text-slate-600">3 Categories:</span> Regs · Open · CTOR
+                    <span class="font-semibold text-slate-600">4 Categories:</span> Regs · Open · CTOR · Users
                 </p>
             </div>
 
         </div>
 
-        <!-- 3 INDEPENDENT CHARTS SECTION -->
+        <!-- 3 CHARTS SECTION -->
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
             
             <!-- Graph 1: Open Rate Performance -->
@@ -162,15 +162,15 @@
                 </div>
             </div>
 
-            <!-- Graph 3: Registrations Performance -->
+            <!-- Graph 3: Registrations & Users Performance -->
             <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm flex flex-col justify-between">
                 <div class="flex justify-between items-center mb-3">
                     <div>
                         <div class="flex items-center gap-1.5">
                             <span class="w-2.5 h-2.5 rounded-full bg-emerald-600"></span>
-                            <h2 class="text-xs font-bold text-slate-900 uppercase tracking-wide">Registrations</h2>
+                            <h2 class="text-xs font-bold text-slate-900 uppercase tracking-wide">Volume: Regs & Users</h2>
                         </div>
-                        <p class="text-[11px] text-slate-500 mt-0.5">Volume of registrations per brand</p>
+                        <p class="text-[11px] text-slate-500 mt-0.5">Total acquisition volume</p>
                     </div>
                     <span class="text-[11px] bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded font-semibold">Units</span>
                 </div>
@@ -184,26 +184,29 @@
         <!-- Filter & Search Controls -->
         <div class="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/80 shadow-sm mb-6">
             <div class="flex flex-col md:flex-row justify-between items-center gap-4">
-                <!-- Tabs -->
+                <!-- Filter Tabs -->
                 <div class="flex flex-wrap gap-1.5 w-full md:w-auto" id="filterTabs">
                     <button onclick="filterCategory('All', this)" class="category-btn active px-4 py-2 text-xs font-semibold rounded-lg bg-blue-600 text-white shadow-sm transition">
-                        All Records (9)
+                        All Records (10)
                     </button>
                     <button onclick="filterCategory('More open rate', this)" class="category-btn px-4 py-2 text-xs font-medium rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200 transition">
                         More Open Rate
                     </button>
-                    <button onclick="filterCategory('More click to open rate', this)" class="category-btn px-4 py-2 text-xs font-medium rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200 transition">
+                    <button onclick="filterCategory('More click-to-open rate', this)" class="category-btn px-4 py-2 text-xs font-medium rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200 transition">
                         More CTOR
                     </button>
                     <button onclick="filterCategory('More registrations', this)" class="category-btn px-4 py-2 text-xs font-medium rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200 transition">
                         More Registrations
+                    </button>
+                    <button onclick="filterCategory('More users', this)" class="category-btn px-4 py-2 text-xs font-medium rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200 transition">
+                        More Users
                     </button>
                 </div>
 
                 <!-- Search Box -->
                 <div class="relative w-full md:w-72">
                     <i class="ph ph-magnifying-glass absolute left-3 top-2.5 text-slate-400 text-base"></i>
-                    <input type="text" id="searchInput" onkeyup="handleSearch()" placeholder="Search brand, campaign, subject..." 
+                    <input type="text" id="searchInput" onkeyup="handleSearch()" placeholder="Search brand, code, sender..." 
                         class="w-full pl-9 pr-4 py-2 text-xs border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
                 </div>
             </div>
@@ -218,9 +221,8 @@
                             <th class="py-3.5 px-4 sm:px-6">Category</th>
                             <th class="py-3.5 px-4 sm:px-6">Result / Metric</th>
                             <th class="py-3.5 px-4 sm:px-6">Brand</th>
-                            <th class="py-3.5 px-4 sm:px-6">Segment</th>
                             <th class="py-3.5 px-4 sm:px-6">Campaign Code</th>
-                            <th class="py-3.5 px-4 sm:px-6">Subject Line</th>
+                            <th class="py-3.5 px-4 sm:px-6">Sender</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-100 text-xs font-normal" id="tableBody">
@@ -244,108 +246,110 @@
     <!-- Footer -->
     <footer class="border-t border-slate-200 bg-white py-6">
         <div class="max-w-7xl mx-auto px-4 text-center">
-            <p class="text-xs text-slate-400">Email Campaigns Performance Report &bull; Jessie Monge &bull; Friday 21st to Thursday 27th</p>
+            <p class="text-xs text-slate-400">Email Campaigns Performance Report &bull; Jessie Monge &bull; Friday, August 28 – Thursday, September 3</p>
         </div>
     </footer>
 
     <!-- Application Script -->
     <script>
-        // PDF Dataset
+        // Updated Dataset (Friday, August 28 – Thursday, September 3)
         const campaigns = [
-            // Top Performers - More registrations
+            // TOP PERFORMERS — MORE REGISTRATIONS
             {
                 category: "More registrations",
                 result: "3 registrations",
                 numericValue: 3,
-                segment: "PL1",
-                brand: "SweepJungle",
-                campaignName: "AWUS0824SWEEj",
-                subjectLine: "Welcome To SweepzJungle",
+                brand: "TheWiseSpin",
+                campaignName: "SEGSHUS0901WISEj",
+                sender: "Rachel",
+                badgeType: "reg"
+            },
+            {
+                category: "More registrations",
+                result: "3 registrations",
+                numericValue: 3,
+                brand: "Big Pirates",
+                campaignName: "SEGSHUS0903BIGj",
+                sender: "—",
                 badgeType: "reg"
             },
             {
                 category: "More registrations",
                 result: "2 registrations",
                 numericValue: 2,
-                segment: "CA1+CA2+CA clicks",
-                brand: "FS Casino (Canada)",
-                campaignName: "XIVUS0824FSCj",
-                subjectLine: "Welcome To FS!",
+                brand: "Dorados",
+                campaignName: "MLJSH0828DORAj",
+                sender: "—",
                 badgeType: "reg"
             },
+
+            // TOP PERFORMERS — MORE OPEN RATE
             {
-                category: "More registrations",
-                result: "1 registration",
+                category: "More open rate",
+                result: "27.93% open rate",
+                numericValue: 27.93,
+                brand: "BigPirates",
+                campaignName: "MLJSHO0831BIGPj",
+                sender: "—",
+                badgeType: "open"
+            },
+            {
+                category: "More open rate",
+                result: "26.38% open rate",
+                numericValue: 26.38,
+                brand: "Dorados",
+                campaignName: "MLJSHO0828DORAj",
+                sender: "—",
+                badgeType: "open"
+            },
+            {
+                category: "More open rate",
+                result: "23.47% open rate",
+                numericValue: 23.47,
+                brand: "Chip'N'Win",
+                campaignName: "MLJSHO0830CHIPj",
+                sender: "—",
+                badgeType: "open"
+            },
+
+            // TOP PERFORMERS — MORE CLICK-TO-OPEN RATE
+            {
+                category: "More click-to-open rate",
+                result: "74.5% CTOR",
+                numericValue: 74.5,
+                brand: "Rolla",
+                campaignName: "SEGUS0902ROLLj",
+                sender: "—",
+                badgeType: "ctor"
+            },
+            {
+                category: "More click-to-open rate",
+                result: "64.1% CTOR",
+                numericValue: 64.1,
+                brand: "McLuck",
+                campaignName: "SEGSHUS0902MCLUj",
+                sender: "—",
+                badgeType: "ctor"
+            },
+            {
+                category: "More click-to-open rate",
+                result: "48.15% CTOR",
+                numericValue: 48.15,
+                brand: "Big Pirates",
+                campaignName: "SEGSHUS0903BIGj",
+                sender: "—",
+                badgeType: "ctor"
+            },
+
+            // TOP PERFORMERS — MORE USERS
+            {
+                category: "More users",
+                result: "1 user",
                 numericValue: 1,
-                segment: "3US_20.08",
-                brand: "SplashCoins",
-                campaignName: "XIVUS0824SPLAj",
-                subjectLine: "Sign Up To Splash",
-                badgeType: "reg"
-            },
-
-            // Top Performers - More open rate
-            {
-                category: "More open rate",
-                result: "71.68%",
-                numericValue: 71.68,
-                segment: "CA1+CA2+CA clicks",
-                brand: "FS Casino (Canada)",
-                campaignName: "XIVUS0824FSCj",
-                subjectLine: "Welcome To FS!",
-                badgeType: "open"
-            },
-            {
-                category: "More open rate",
-                result: "47.97%",
-                numericValue: 47.97,
-                segment: "5US_20.08",
-                brand: "SweetSweeps",
-                campaignName: "XIVUS0825SWEEj",
-                subjectLine: "Balance Locked:",
-                badgeType: "open"
-            },
-            {
-                category: "More open rate",
-                result: "46.65%",
-                numericValue: 46.65,
-                segment: "8US_20.08",
-                brand: "Rolla sweeps",
-                campaignName: "XIVUS0825ROLLj",
-                subjectLine: "As requested: Coinz Pack",
-                badgeType: "open"
-            },
-
-            // Top Performers - More click to open rate (CTOR)
-            {
-                category: "More click to open rate",
-                result: "10.1% CTOR",
-                numericValue: 10.1,
-                segment: "8US_20.08",
-                brand: "SweepJungle",
-                campaignName: "SEGSHUS0827SWEEj",
-                subjectLine: "Your account is ready to explore",
-                badgeType: "ctor"
-            },
-            {
-                category: "More click to open rate",
-                result: "8.75% CTOR",
-                numericValue: 8.75,
-                segment: "3US_20.08",
-                brand: "CasinoClick",
-                campaignName: "SEGUS0826CASIj",
-                subjectLine: "Your account deal is ready",
-                badgeType: "ctor"
-            },
-            {
-                category: "More click to open rate",
-                result: "6.2% CTOR",
-                numericValue: 6.2,
-                segment: "5US_20.08",
-                brand: "SplashCoins",
-                campaignName: "SEGUS0827SPLAj",
-                subjectLine: "250,000GC and 2.50SC!",
-                badgeType: "ctor"
+                brand: "TheWiseSpin",
+                campaignName: "SEGSHUS0901WISEj",
+                sender: "Rachel",
+                badgeType: "user"
             }
         ];
 
@@ -361,6 +365,8 @@
                 colorClasses = "bg-blue-100 text-blue-900 font-bold border-blue-200";
             } else if (badgeType === 'reg') {
                 colorClasses = "bg-emerald-100 text-emerald-900 font-bold border-emerald-200";
+            } else if (badgeType === 'user') {
+                colorClasses = "bg-purple-100 text-purple-900 font-bold border-purple-200";
             }
             return `<span class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold border ${colorClasses}">${result}</span>`;
         }
@@ -375,10 +381,9 @@
                 const matchesCategory = currentCategory === "All" || c.category.toLowerCase() === currentCategory.toLowerCase();
                 const matchesSearch = 
                     c.brand.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                    c.subjectLine.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                    c.segment.toLowerCase().includes(searchTerm.toLowerCase()) ||
                     c.campaignName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                    c.result.toLowerCase().includes(searchTerm.toLowerCase());
+                    c.result.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                    c.sender.toLowerCase().includes(searchTerm.toLowerCase());
                 return matchesCategory && matchesSearch;
             });
 
@@ -403,14 +408,14 @@
                     <td class="py-3.5 px-4 sm:px-6 font-semibold text-slate-900 whitespace-nowrap">
                         ${c.brand}
                     </td>
-                    <td class="py-3.5 px-4 sm:px-6 font-mono text-[11px] text-slate-600 whitespace-nowrap">
-                        ${c.segment}
-                    </td>
                     <td class="py-3.5 px-4 sm:px-6 font-mono text-[11px] text-blue-600 whitespace-nowrap">
                         ${c.campaignName}
                     </td>
-                    <td class="py-3.5 px-4 sm:px-6 text-slate-700 max-w-sm truncate" title="${c.subjectLine}">
-                        ${c.subjectLine}
+                    <td class="py-3.5 px-4 sm:px-6 text-slate-700 whitespace-nowrap">
+                        ${c.sender !== '—' 
+                            ? `<span class="inline-flex items-center gap-1 font-semibold text-blue-700 bg-blue-50 px-2 py-0.5 rounded border border-blue-200"><i class="ph ph-user text-xs"></i> ${c.sender}</span>` 
+                            : `<span class="text-slate-400 font-mono">—</span>`
+                        }
                     </td>
                 </tr>
             `).join("");
@@ -418,6 +423,8 @@
             // Calculate Sums for Footer
             let sumRegistrations = 0;
             let countRegs = 0;
+            let sumUsers = 0;
+            let countUsers = 0;
             let sumOpenRate = 0;
             let countOpenRate = 0;
             let sumCtor = 0;
@@ -427,6 +434,9 @@
                 if (item.badgeType === 'reg') {
                     sumRegistrations += item.numericValue;
                     countRegs++;
+                } else if (item.badgeType === 'user') {
+                    sumUsers += item.numericValue;
+                    countUsers++;
                 } else if (item.badgeType === 'open') {
                     sumOpenRate += item.numericValue;
                     countOpenRate++;
@@ -446,7 +456,15 @@
                 `);
             }
 
-            if (countOpenRate > 0 && currentCategory !== 'More registrations') {
+            if (countUsers > 0) {
+                sumBadgesHtml.push(`
+                    <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold bg-purple-100 text-purple-950 border border-purple-300">
+                        <i class="ph ph-user text-sm text-purple-700"></i> Total Users: ${sumUsers}
+                    </span>
+                `);
+            }
+
+            if (countOpenRate > 0 && currentCategory !== 'More registrations' && currentCategory !== 'More users') {
                 sumBadgesHtml.push(`
                     <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold bg-amber-100 text-amber-950 border border-amber-300">
                         <i class="ph ph-chart-line-up text-sm text-amber-700"></i> Sum Open: ${sumOpenRate.toFixed(2)}% (Avg: ${(sumOpenRate / countOpenRate).toFixed(2)}%)
@@ -454,7 +472,7 @@
                 `);
             }
 
-            if (countCtor > 0 && currentCategory !== 'More registrations') {
+            if (countCtor > 0 && currentCategory !== 'More registrations' && currentCategory !== 'More users') {
                 sumBadgesHtml.push(`
                     <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold bg-blue-100 text-blue-950 border border-blue-300">
                         <i class="ph ph-cursor-click text-sm text-blue-700"></i> Sum CTOR: ${sumCtor.toFixed(2)}% (Avg: ${(sumCtor / countCtor).toFixed(2)}%)
@@ -474,7 +492,7 @@
                             ${sumBadgesHtml.join('')}
                         </div>
                     </td>
-                    <td colspan="3" class="py-4 px-4 sm:px-6 text-right text-slate-500 font-medium text-xs">
+                    <td colspan="2" class="py-4 px-4 sm:px-6 text-right text-slate-500 font-medium text-xs">
                         Showing <span class="font-bold text-slate-900">${filtered.length}</span> campaigns
                     </td>
                 </tr>
@@ -506,10 +524,10 @@
             new Chart(ctxOpen, {
                 type: 'bar',
                 data: {
-                    labels: ['FS Casino (CA)', 'SweetSweeps', 'Rolla sweeps'],
+                    labels: ['BigPirates', 'Dorados', "Chip'N'Win"],
                     datasets: [{
                         label: 'Open Rate (%)',
-                        data: [71.68, 47.97, 46.65],
+                        data: [27.93, 26.38, 23.47],
                         backgroundColor: ['#f59e0b', '#fbbf24', '#fcd34d'],
                         borderRadius: 6,
                         barThickness: 36
@@ -531,7 +549,7 @@
                     scales: {
                         y: {
                             beginAtZero: true,
-                            max: 80,
+                            max: 35,
                             ticks: { callback: value => value + '%', font: { size: 10 } },
                             grid: { color: '#f1f5f9' }
                         },
@@ -548,10 +566,10 @@
             new Chart(ctxCtor, {
                 type: 'bar',
                 data: {
-                    labels: ['SweepJungle (8US)', 'CasinoClick (3US)', 'SplashCoins (5US)'],
+                    labels: ['Rolla', 'McLuck', 'Big Pirates'],
                     datasets: [{
                         label: 'CTOR (%)',
-                        data: [10.1, 8.75, 6.2],
+                        data: [74.5, 64.1, 48.15],
                         backgroundColor: ['#2563eb', '#3b82f6', '#93c5fd'],
                         borderRadius: 6,
                         barThickness: 36
@@ -573,30 +591,30 @@
                     scales: {
                         y: {
                             beginAtZero: true,
-                            max: 12,
+                            max: 85,
                             ticks: { callback: value => value + '%', font: { size: 10 } },
                             grid: { color: '#f1f5f9' }
                         },
                         x: {
                             grid: { display: false },
-                            ticks: { font: { size: 10.5, weight: '500' } }
+                            ticks: { font: { size: 11, weight: '500' } }
                         }
                     }
                 }
             });
 
-            // 3. REGISTRATIONS CHART
+            // 3. REGISTRATIONS & USERS CHART
             const ctxRegs = document.getElementById('registrationsChart').getContext('2d');
             new Chart(ctxRegs, {
                 type: 'bar',
                 data: {
-                    labels: ['SweepJungle', 'FS Casino (CA)', 'SplashCoins'],
+                    labels: ['TheWiseSpin (Regs)', 'Big Pirates (Regs)', 'Dorados (Regs)', 'TheWiseSpin (User)'],
                     datasets: [{
-                        label: 'Registrations',
-                        data: [3, 2, 1],
-                        backgroundColor: ['#10b981', '#34d399', '#6ee7b7'],
+                        label: 'Acquisitions',
+                        data: [3, 3, 2, 1],
+                        backgroundColor: ['#10b981', '#34d399', '#6ee7b7', '#8b5cf6'],
                         borderRadius: 6,
-                        barThickness: 36
+                        barThickness: 30
                     }]
                 },
                 options: {
@@ -607,7 +625,8 @@
                         tooltip: {
                             callbacks: {
                                 label: function(context) {
-                                    return ` ${context.parsed.y} registrations`;
+                                    const val = context.parsed.y;
+                                    return context.dataIndex === 3 ? ` ${val} user` : ` ${val} registrations`;
                                 }
                             }
                         }
@@ -621,7 +640,7 @@
                         },
                         x: {
                             grid: { display: false },
-                            ticks: { font: { size: 11, weight: '500' } }
+                            ticks: { font: { size: 10, weight: '500' } }
                         }
                     }
                 }
