@@ -877,16 +877,7 @@
       const agg = aggregateJsonData(currentStartDate, currentEndDate);
       const csvMap = await aggregateCsvForRange(currentStartDate, currentEndDate);
 
-      // Lista de ESPs activas reales (que efectivamente enviaron correos, delivered > 0)
-      const espList = Object.values(csvMap)
-        .filter(e => !isExcludedEsp(e.esp) && (e.delivered || 0) > 0)
-        .sort((a, b) => (b.clicked * 10 + b.delivered) - (a.clicked * 10 + a.delivered));
-
-      const activeEsps = espList.length > 0 
-        ? espList.map(e => e.esp) 
-        : ['SEG (Sendgrid) IP 2 / SH', 'SEG (Sendgrid) IP 1', 'MLJ (Mailjet) IP 2', 'MLJ (Mailjet) IP 1'];
-
-      // 1. Mapear las filas existentes en breakdownByEsp respetando estrictamente sus números originales
+      // 1. Mapear las filas existentes en breakdownByEsp respetando sus números originales
       const breakdownByEsp = {};
       (agg.esp_ip_breakdown || []).forEach(r => {
         if (r.is_total || r.is_overall) return;
@@ -918,7 +909,16 @@
         breakdownByEsp[esp][key].origFtd += ftd;
       });
 
-      // Función de distribución por cuota de resto mayor (solo > 0)
+      // Lista de ESPs activas reales (que efectivamente enviaron correos, delivered > 0)
+      const espList = Object.values(csvMap)
+        .filter(e => !isExcludedEsp(e.esp) && (e.delivered || 0) > 0)
+        .sort((a, b) => (b.clicked * 10 + b.delivered) - (a.clicked * 10 + a.delivered));
+
+      const activeEsps = espList.length > 0 
+        ? espList.map(e => e.esp) 
+        : ['SEG (Sendgrid) IP 2 / SH', 'SEG (Sendgrid) IP 1', 'MLJ (Mailjet) IP 2', 'MLJ (Mailjet) IP 1'];
+
+      // Función de distribución por resto mayor
       const allocateDelta = (items, delta, getWeight, addVal) => {
         if (delta <= 0 || !items || items.length === 0) return;
         const eligible = items.filter(it => (getWeight(it) || 0) > 0);
@@ -946,11 +946,9 @@
         const targetFtd = bData.users || 0;
         const adv = bData.advertiser || '-';
 
-        // Si la marca original viene con 0 y 0, NO procesar
         if (targetSig === 0 && targetFtd === 0) return;
 
-        // Búsqueda prioritaria: 1) por nombre de marca exacto
-        let matching = [];
+        const matching = [];
         Object.entries(breakdownByEsp).forEach(([esp, group]) => {
           Object.values(group).forEach(item => {
             if (item.brand.trim().toLowerCase() === bName.trim().toLowerCase()) {
@@ -959,17 +957,6 @@
           });
         });
 
-        // 2) Si no coincide por marca, buscar filas del MISMO anunciante que ya tengan actividad real
-        if (matching.length === 0) {
-          Object.entries(breakdownByEsp).forEach(([esp, group]) => {
-            Object.values(group).forEach(item => {
-              if (item.advertiser.trim().toLowerCase() === adv.trim().toLowerCase()) {
-                matching.push(item);
-              }
-            });
-          });
-        }
-
         if (matching.length > 0) {
           const curSig = matching.reduce((s, it) => s + (it.signups || 0), 0);
           const curFtd = matching.reduce((s, it) => s + (it.ftds || 0), 0);
@@ -977,32 +964,33 @@
           // REGLA PARA SIGNUPS:
           // Solo filas con origSig > 0 Y que pertenezcan a una IP con Delivered > 0
           if (targetSig > curSig) {
-            const deltaSig = targetSig - curSig;
-            const sigEligible = matching.filter(it => {
-              const deliv = csvMap[it.esp_ip]?.delivered || 0;
-              return (it.origSig || 0) > 0 && deliv > 0;
-            });
-            if (sigEligible.length > 0) {
-              allocateDelta(sigEligible, deltaSig, it => it.origSig, (it, val) => { it.signups += val; });
-            }
+            allocateDelta(
+              matching,
+              targetSig - curSig,
+              it => {
+                const deliv = csvMap[it.esp_ip]?.delivered || 0;
+                return (it.origSig > 0 && deliv > 0) ? it.origSig : 0;
+              },
+              (it, val) => { it.signups += val; }
+            );
           }
 
-          // REGLA PARA FTDS:
+          // REGLA PARA FTDS / PLAYERS:
           // Solo filas con origFtd > 0 Y que pertenezcan a una IP con Delivered > 0
           if (targetFtd > curFtd) {
-            const deltaFtd = targetFtd - curFtd;
-            const ftdEligible = matching.filter(it => {
-              const deliv = csvMap[it.esp_ip]?.delivered || 0;
-              return (it.origFtd || 0) > 0 && deliv > 0;
-            });
-            if (ftdEligible.length > 0) {
-              allocateDelta(ftdEligible, deltaFtd, it => it.origFtd, (it, val) => { it.ftds += val; });
-            }
+            allocateDelta(
+              matching,
+              targetFtd - curFtd,
+              it => {
+                const deliv = csvMap[it.esp_ip]?.delivered || 0;
+                return (it.origFtd > 0 && deliv > 0) ? it.origFtd : 0;
+              },
+              (it, val) => { it.ftds += val; }
+            );
           }
         } else {
-          // Solo para marcas totalmente huérfanas que NO existen en el desglose (ej. CardCrush)
-          if (targetSig === 0 && targetFtd === 0) return;
-
+          // Marcas que NO existían en el desglose (ej. CardCrush)
+          // SOLO se asignan a IPs activas con Delivered > 0
           const validActiveEsps = activeEsps.filter(esp => (csvMap[esp]?.delivered || 0) > 0);
           if (validActiveEsps.length === 0) return;
 
@@ -1023,8 +1011,9 @@
         }
       });
 
-      // 🔒 CANDADO DE SEGURIDAD ABSOLUTO:
-      // Si una fila venía con origSig == 0 o origFtd == 0 originalmente, se garantiza que quede en 0.
+      // 🔒 CANDADO ABSOLUTO DE SEGURIDAD:
+      // Si una fila vino originalmente en 0 de signups, sus signups DEBEN ser 0.
+      // Si una fila vino originalmente en 0 de FTDs, sus FTDs DEBEN ser 0.
       Object.values(breakdownByEsp).forEach(group => {
         Object.values(group).forEach(item => {
           if ((item.origSig || 0) === 0) {
