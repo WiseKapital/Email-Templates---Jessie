@@ -500,7 +500,7 @@
       return res.map(s => s.replace(/^"|"$/g, '').trim());
     }
 
-    // LECTURA DIRECTA Y EXACTA DEL CSV (INCLUYENDO REGISTRATION Y PLAYERS)
+    // El CSV lee las métricas técnicas de entregabilidad
     function parseDailyCsv(txt) {
       if (!txt || typeof txt !== 'string') return null;
       const lines = txt.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
@@ -530,8 +530,6 @@
           const o = parseNum(c[5]);
           const cl = parseNum(c[7]);
           const un = parseNum(c[11]);
-          const sig = parseNum(c[12]); // Columna 12: Registration
-          const pl = parseNum(c[13]);  // Columna 13: Players
 
           const item = map[full];
           item.delivered += d; 
@@ -541,8 +539,6 @@
           item.opened += o; 
           item.clicked += cl; 
           item.unsub += un;
-          item.signups += sig;
-          item.players += pl;
           
           if (!item.domains[domName]) item.domains[domName] = { delivered: 0, softBounce: 0, hardBounce: 0, bounced: 0, opened: 0, clicked: 0, unsub: 0, signups: 0, players: 0 };
           const dom = item.domains[domName];
@@ -553,8 +549,6 @@
           dom.opened += o; 
           dom.clicked += cl; 
           dom.unsub += un;
-          dom.signups += sig;
-          dom.players += pl;
         }
       }
       return Object.keys(map).length > 0 ? map : null;
@@ -654,11 +648,11 @@
       validDays.forEach(m => Object.entries(m).forEach(([esp, v]) => {
         if (!merged[esp]) merged[esp] = { ...v, domains: {} };
         else {
-          ['delivered','softBounce','hardBounce','bounced','opened','clicked','unsub','signups','players'].forEach(k => merged[esp][k] += (v[k] || 0));
+          ['delivered','softBounce','hardBounce','bounced','opened','clicked','unsub'].forEach(k => merged[esp][k] += (v[k] || 0));
         }
         Object.entries(v.domains).forEach(([dom, dv]) => {
           if (!merged[esp].domains[dom]) merged[esp].domains[dom] = { ...dv };
-          else ['delivered','softBounce','hardBounce','bounced','opened','clicked','unsub','signups','players'].forEach(k => merged[esp].domains[dom][k] += (dv[k] || 0));
+          else ['delivered','softBounce','hardBounce','bounced','opened','clicked','unsub'].forEach(k => merged[esp].domains[dom][k] += (dv[k] || 0));
         });
       }));
       return merged;
@@ -898,17 +892,7 @@
 
       const sortOrder = ['MLJ (Mailjet) IP 1', 'MLJ (Mailjet) IP 2', 'MLJ (Mailjet) IP 3 / SH', 'SEG (Sendgrid) IP 1', 'SEG (Sendgrid) IP 2 / SH'];
 
-      // 1. Asegurar que todas las ESPs existan en csvMap con sus datos leídos directamente del CSV
-      sortOrder.forEach(espName => {
-        if (!csvMap[espName]) {
-          csvMap[espName] = {
-            esp: espName, delivered: 0, softBounce: 0, hardBounce: 0,
-            bounced: 0, opened: 0, clicked: 0, unsub: 0, signups: 0, players: 0, domains: {}
-          };
-        }
-      });
-
-      // 2. Mapear las filas del desglose por anunciante y marca respetando estrictamente lo que vino
+      // 1. Mapear las filas crudas existentes en breakdownByEsp (preservando exactamente el origen)
       const breakdownByEsp = {};
       (agg.esp_ip_breakdown || []).forEach(r => {
         if (r.is_total || r.is_overall) return;
@@ -928,15 +912,100 @@
             advertiser: adv,
             brand: br,
             signups: 0,
-            ftds: 0
+            ftds: 0,
+            origSig: 0,
+            origFtd: 0
           };
         }
 
         breakdownByEsp[esp][key].signups += sig;
         breakdownByEsp[esp][key].ftds += ftd;
+        breakdownByEsp[esp][key].origSig += sig;
+        breakdownByEsp[esp][key].origFtd += ftd;
       });
 
-      // 3. Reconstruir filas detalladas de la tabla ESP / IP Breakdown
+      // 2. Función de distribución por resto mayor (SOLO PARA > 0)
+      const allocateDelta = (items, delta, getWeight, addVal) => {
+        if (delta <= 0 || !items || items.length === 0) return;
+        const eligible = items.filter(it => (getWeight(it) || 0) > 0);
+        if (eligible.length === 0) return;
+
+        let totalW = eligible.reduce((s, it) => s + getWeight(it), 0);
+        if (totalW <= 0) return;
+
+        const weights = eligible.map(it => getWeight(it) / totalW);
+        const quotas = weights.map(w => delta * w);
+        const ints = quotas.map(q => Math.floor(q));
+        let leftover = delta - ints.reduce((a, b) => a + b, 0);
+        const rems = quotas.map((q, idx) => ({ idx, r: q - Math.floor(q) }));
+        rems.sort((a, b) => b.r - a.r);
+        for (let i = 0; i < leftover; i++) ints[rems[i].idx]++;
+        eligible.forEach((it, idx) => addVal(it, ints[idx]));
+      };
+
+      // 3. RECONCILIACIÓN ESTRICTA:
+      // - Si una fila viene en 0, NUNCA se le asigna nada.
+      // - Si la IP tiene Delivered en 0, NUNCA se le asigna más.
+      Object.entries(agg.brands).forEach(([bName, bData]) => {
+        const targetSig = bData.signups || 0;
+        const targetFtd = bData.users || 0;
+        const adv = bData.advertiser || '-';
+
+        if (targetSig === 0 && targetFtd === 0) return;
+
+        const matching = [];
+        Object.entries(breakdownByEsp).forEach(([esp, group]) => {
+          Object.values(group).forEach(item => {
+            const bMatch = item.brand.trim().toLowerCase() === bName.trim().toLowerCase();
+            const aMatch = item.advertiser.trim().toLowerCase() === adv.trim().toLowerCase();
+            if (bMatch || aMatch) {
+              matching.push(item);
+            }
+          });
+        });
+
+        if (matching.length > 0) {
+          const curSig = matching.reduce((s, it) => s + (it.signups || 0), 0);
+          const curFtd = matching.reduce((s, it) => s + (it.ftds || 0), 0);
+
+          // SOLO se asigna si origSig > 0 y si la IP tiene delivered > 0
+          if (targetSig > curSig) {
+            allocateDelta(
+              matching,
+              targetSig - curSig,
+              it => {
+                const deliv = csvMap[it.esp_ip]?.delivered || 0;
+                return (it.origSig > 0 && deliv > 0) ? it.origSig : 0;
+              },
+              (it, val) => { it.signups += val; }
+            );
+          }
+
+          // SOLO se asigna si origFtd > 0 y si la IP tiene delivered > 0
+          if (targetFtd > curFtd) {
+            allocateDelta(
+              matching,
+              targetFtd - curFtd,
+              it => {
+                const deliv = csvMap[it.esp_ip]?.delivered || 0;
+                return (it.origFtd > 0 && deliv > 0) ? it.origFtd : 0;
+              },
+              (it, val) => { it.ftds += val; }
+            );
+          }
+        }
+      });
+
+      // 🔒 CANDADO ABSOLUTO:
+      // Si vino originalmente con 0 en signups o FTDs, se asegura que quede estrictamente en 0
+      Object.values(breakdownByEsp).forEach(group => {
+        Object.values(group).forEach(item => {
+          if ((item.origSig || 0) === 0) item.signups = 0;
+          if ((item.origFtd || 0) === 0) item.ftds = 0;
+        });
+      });
+
+      // 4. Reconstruir filas detalladas de la tabla ESP / IP Breakdown
       const allKnownEsps = Array.from(new Set([...sortOrder, ...Object.keys(breakdownByEsp)])).filter(e => !isExcludedEsp(e));
       const newBreakdownRows = [];
       let grandSig = 0, grandFtd = 0;
@@ -982,7 +1051,34 @@
 
       agg.esp_ip_breakdown = newBreakdownRows;
 
-      // 4. Preparar la lista de ESPs para la tabla superior
+      // 5. Sincronizar la tabla superior de ESP con los subtotales exactos del desglose
+      const espTotalsFromBreakdown = {};
+      newBreakdownRows.forEach(r => {
+        if (r.is_total && !r.is_overall) {
+          const espName = r.esp_ip.replace(/^GRAND TOTAL\s+/i, '').trim();
+          if (!isExcludedEsp(espName)) {
+            espTotalsFromBreakdown[espName] = { signups: r.signups || 0, ftds: r.ftds || 0 };
+          }
+        }
+      });
+
+      sortOrder.forEach(espName => {
+        if (!csvMap[espName]) {
+          csvMap[espName] = {
+            esp: espName, delivered: 0, softBounce: 0, hardBounce: 0,
+            bounced: 0, opened: 0, clicked: 0, unsub: 0, signups: 0, players: 0, domains: {}
+          };
+        }
+      });
+
+      Object.values(csvMap).forEach(item => {
+        if (!isExcludedEsp(item.esp)) {
+          const bd = espTotalsFromBreakdown[item.esp] || { signups: 0, ftds: 0 };
+          item.signups = bd.signups || 0;
+          item.players = bd.ftds || 0;
+        }
+      });
+
       const list = Object.values(csvMap).filter(e => !isExcludedEsp(e.esp));
       list.sort((a, b) => {
         const idxA = sortOrder.indexOf(a.esp);
@@ -990,16 +1086,15 @@
         return (idxA !== -1 ? idxA : 99) - (idxB !== -1 ? idxB : 99);
       });
 
-      // Mantener todas las IPs conocidas (incluso si tienen 0)
       agg.esp = list;
 
       ['delivered','softBounce','hardBounce','bounced','opened','clicked','unsub'].forEach(k => {
         agg[k] = agg.esp.reduce((acc, cur) => acc + (cur[k] || 0), 0);
       });
 
-      // Los totales de signups y players de la tabla ESP salen de la lectura real del CSV
-      agg.espSignups = agg.esp.reduce((acc, cur) => acc + (cur.signups || 0), 0);
-      agg.espPlayers = agg.esp.reduce((acc, cur) => acc + (cur.players || 0), 0);
+      // El total de la tabla cuadra con el desglose exacto
+      agg.espSignups = grandSig;
+      agg.espPlayers = grandFtd;
 
       renderDashboard(agg, currentStartDate, currentEndDate);
     }
@@ -1155,43 +1250,13 @@
       const tb = $('espTableBody'), tf = $('espTableFoot'); tb.innerHTML = '';
       list.forEach(i => {
         const v = i.delivered + (i.softBounce||0) + (i.hardBounce||0);
-        tb.innerHTML += `<tr class="esp-summary-row">
-          <td class="py-3 px-4 text-left font-bold">${i.esp}</td>
-          <td class="py-3 px-4 font-mono">${v.toLocaleString()}</td>
-          <td class="py-3 px-4 font-mono">${i.delivered.toLocaleString()}</td>
-          <td class="py-3 px-4 font-mono text-amber-700">${(i.softBounce||0).toLocaleString()}</td>
-          <td class="py-3 px-4 font-mono text-rose-700">${(i.hardBounce||0).toLocaleString()}</td>
-          <td class="py-3 px-4 font-mono text-emerald-700">${i.opened.toLocaleString()}</td>
-          <td class="py-3 px-4 font-mono text-sky-700">${i.clicked.toLocaleString()}</td>
-          <td class="py-3 px-4 font-mono text-amber-600">${(i.signups||0).toLocaleString()}</td>
-          <td class="py-3 px-4 font-mono text-indigo-600">${(i.players||0).toLocaleString()}</td>
-        </tr>`;
+        tb.innerHTML += `<tr class="esp-summary-row"><td class="py-3 px-4 text-left font-bold">${i.esp}</td><td class="py-3 px-4 font-mono">${v.toLocaleString()}</td><td class="py-3 px-4 font-mono">${i.delivered.toLocaleString()}</td><td class="py-3 px-4 font-mono text-amber-700">${(i.softBounce||0).toLocaleString()}</td><td class="py-3 px-4 font-mono text-rose-700">${(i.hardBounce||0).toLocaleString()}</td><td class="py-3 px-4 font-mono text-emerald-700">${i.opened.toLocaleString()}</td><td class="py-3 px-4 font-mono text-sky-700">${i.clicked.toLocaleString()}</td><td class="py-3 px-4 font-mono text-amber-600">${(i.signups||0).toLocaleString()}</td><td class="py-3 px-4 font-mono text-indigo-600">${(i.players||0).toLocaleString()}</td></tr>`;
         Object.entries(i.domains||{}).forEach(([dom, d]) => {
-          tb.innerHTML += `<tr class="domain-row text-xs text-slate-600 ${areDetailsExpanded?'':'hidden'}">
-            <td class="py-1.5 px-4 text-left pl-8">${dom}</td>
-            <td class="font-mono">${(d.delivered+d.softBounce+d.hardBounce).toLocaleString()}</td>
-            <td>${d.delivered.toLocaleString()}</td>
-            <td class="text-amber-700">${d.softBounce.toLocaleString()}</td>
-            <td class="text-rose-700">${d.hardBounce.toLocaleString()}</td>
-            <td class="text-emerald-700">${d.opened.toLocaleString()}</td>
-            <td class="text-sky-700">${d.clicked.toLocaleString()}</td>
-            <td class="font-mono text-amber-600">${(d.signups||0).toLocaleString()}</td>
-            <td class="font-mono text-indigo-600">${(d.players||0).toLocaleString()}</td>
-          </tr>`;
+          tb.innerHTML += `<tr class="domain-row text-xs text-slate-600 ${areDetailsExpanded?'':'hidden'}"><td class="py-1.5 px-4 text-left pl-8">${dom}</td><td class="font-mono">${(d.delivered+d.softBounce+d.hardBounce).toLocaleString()}</td><td>${d.delivered.toLocaleString()}</td><td class="text-amber-700">${d.softBounce.toLocaleString()}</td><td class="text-rose-700">${d.hardBounce.toLocaleString()}</td><td class="text-emerald-700">${d.opened.toLocaleString()}</td><td class="text-sky-700">${d.clicked.toLocaleString()}</td><td class="text-slate-400 font-mono text-center">-</td><td class="text-slate-400 font-mono text-center">-</td></tr>`;
         });
       });
       const totVol = (agg.delivered||0) + (agg.softBounce||0) + (agg.hardBounce||0);
-      tf.innerHTML = `<tr class="font-bold text-slate-900 text-sm">
-        <td class="py-3.5 px-4 text-left">Grand total</td>
-        <td class="py-3.5 px-4 font-mono">${totVol.toLocaleString()}</td>
-        <td class="py-3.5 px-4 font-mono">${(agg.delivered||0).toLocaleString()}</td>
-        <td class="py-3.5 px-4 font-mono text-amber-700">${(agg.softBounce||0).toLocaleString()}</td>
-        <td class="py-3.5 px-4 font-mono text-rose-700">${(agg.hardBounce||0).toLocaleString()}</td>
-        <td class="py-3.5 px-4 font-mono text-emerald-700">${(agg.opened||0).toLocaleString()}</td>
-        <td class="py-3.5 px-4 font-mono text-sky-700">${(agg.clicked||0).toLocaleString()}</td>
-        <td class="py-3.5 px-4 font-mono text-amber-600">${(agg.espSignups||0).toLocaleString()}</td>
-        <td class="py-3.5 px-4 font-mono text-indigo-600">${(agg.espPlayers||0).toLocaleString()}</td>
-      </tr>`;
+      tf.innerHTML = `<tr class="font-bold text-slate-900 text-sm"><td class="py-3.5 px-4 text-left">Grand total</td><td class="py-3.5 px-4 font-mono">${totVol.toLocaleString()}</td><td class="py-3.5 px-4 font-mono">${(agg.delivered||0).toLocaleString()}</td><td class="py-3.5 px-4 font-mono text-amber-700">${(agg.softBounce||0).toLocaleString()}</td><td class="py-3.5 px-4 font-mono text-rose-700">${(agg.hardBounce||0).toLocaleString()}</td><td class="py-3.5 px-4 font-mono text-emerald-700">${(agg.opened||0).toLocaleString()}</td><td class="py-3.5 px-4 font-mono text-sky-700">${(agg.clicked||0).toLocaleString()}</td><td class="py-3.5 px-4 font-mono text-amber-600">${(agg.espSignups||0).toLocaleString()}</td><td class="py-3.5 px-4 font-mono text-indigo-600">${(agg.espPlayers||0).toLocaleString()}</td></tr>`;
     }
 
     function renderOpsTeam(ops, rrF, kpi) {
