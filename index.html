@@ -980,7 +980,7 @@
           espIpMap[espIp] = { items: {}, order: [] };
         }
         if (!espIpMap[espIp].items[key]) {
-          espIpMap[espIp] = { esp_ip: espIp, advertiser: adv, brand: br, signups: 0, ftds: 0 };
+          espIpMap[espIp].items[key] = { esp_ip: espIp, advertiser: adv, brand: br, signups: 0, ftds: 0 };
           espIpMap[espIp].order.push(key);
         }
         espIpMap[espIp].items[key].signups += (sig || 0);
@@ -1183,29 +1183,20 @@
       renderEspIpBreakdown(cachedDetailedBreakdownRows);
     }
 
-    // Algoritmo de asignación exacta (solo reparte a filas con origSig > 0)
+    // Algoritmo de asignación exacta (reparte totalAmount de forma exacta sin generar decimales ni perder restos)
     function allocateExact(items, totalAmount, getWeight, setter) {
       if (!items || items.length === 0) return;
       if (totalAmount <= 0) {
         items.forEach(it => setter(it, 0));
         return;
       }
-
-      // Regla estricta: Solo candidatos con peso > 0 y origSig > 0
-      const eligible = items.filter(it => (getWeight(it) || 0) > 0 && (it.origSig || 0) > 0);
-      const targets = eligible.length > 0 ? eligible : items.filter(it => (it.origSig || 0) > 0);
-
-      // Si ninguno tiene origSig > 0, no se le asigna nada a ninguno
-      if (targets.length === 0) {
-        items.forEach(it => setter(it, 0));
+      if (items.length === 1) {
+        setter(items[0], totalAmount);
         return;
       }
 
-      if (targets.length === 1) {
-        items.forEach(it => setter(it, 0));
-        setter(targets[0], totalAmount);
-        return;
-      }
+      const eligible = items.filter(it => (getWeight(it) || 0) > 0);
+      const targets = eligible.length > 0 ? eligible : items;
 
       const weights = targets.map(it => Math.max(0, getWeight(it) || 0));
       let sumW = weights.reduce((a, b) => a + b, 0);
@@ -1269,6 +1260,7 @@
       });
 
       // 2. RECONCILIACIÓN ROBUSTA MULTI-MES CON NORMALIZACIÓN DE MARCAS
+      // Normalizar marcas para evitar que 'GAMETIME' en un mes pise a 'Gametime' en otro
       const normalizedBrands = {};
       Object.entries(agg.brands).forEach(([bName, bData]) => {
         const cleanKey = bName.trim().toLowerCase();
@@ -1323,11 +1315,7 @@
           });
         });
 
-        // REGLA: Filtrar estrictamente solo las filas que originalmente tenían origSig > 0
-        let sigEligible = matching.filter(it => (it.origSig || 0) > 0);
-
-        // Si la marca no tenía ninguna fila en el desglose pero sí tiene conversiones reales
-        if (sigEligible.length === 0 && (targetSig > 0 || targetFtd > 0)) {
+        if (matching.length === 0 && (targetSig > 0 || targetFtd > 0)) {
           const chosenEsp = activeEsps[unassignedRotation % activeEsps.length];
           unassignedRotation++;
 
@@ -1344,29 +1332,17 @@
           };
           breakdownByEsp[chosenEsp][key] = newRow;
           matching.push(newRow);
-          sigEligible = [newRow];
         }
 
-        // Si originalmente tenían 0, se aseguran en 0 permanentemente
-        matching.forEach(it => {
-          if ((it.origSig || 0) <= 0) {
-            it.signups = 0;
-            it.ftds = 0;
-          }
-        });
+        allocateExact(matching, targetSig, it => it.origSig, (it, val) => { it.signups = val; });
 
-        // Asignación de Signups y FTDs ÚNICAMENTE a las filas con origSig > 0
-        if (sigEligible.length > 0) {
-          allocateExact(sigEligible, targetSig, it => it.origSig, (it, val) => { it.signups = val; });
-
-          const hasOrigFtds = sigEligible.some(it => (it.origFtd || 0) > 0);
-          allocateExact(
-            sigEligible,
-            targetFtd,
-            it => hasOrigFtds ? (it.origFtd || 0) : (it.signups || 0),
-            (it, val) => { it.ftds = val; }
-          );
-        }
+        const hasOrigFtds = matching.some(it => (it.origFtd || 0) > 0);
+        allocateExact(
+          matching,
+          targetFtd,
+          it => hasOrigFtds ? (it.origFtd || 0) : (it.signups || 0),
+          (it, val) => { it.ftds = val; }
+        );
       });
 
       // Limpiar a 0 marcas no presentes en este rango
@@ -1413,19 +1389,16 @@
         grandFtd += subFtd;
       });
 
-      // 4. CANDADO MAESTRO DE SEGURIDAD (Solo opera sobre filas con origSig > 0)
+      // 4. CANDADO MAESTRO DE SEGURIDAD (Garantiza 0 discrepancia entre KPIs y Tablas en cualquier rango)
       if ((grandSig !== agg.signups || grandFtd !== agg.users) && newBreakdownRows.length > 0) {
-        // Exclusión estricta de cualquier fila con 0 original
-        const activeRows = newBreakdownRows.filter(r => !r.is_total && !r.is_overall && (r.origSig || 0) > 0 && (r.signups || 0) > 0);
-
+        const activeRows = newBreakdownRows.filter(r => !r.is_total && !r.is_overall);
         if (activeRows.length > 0) {
           if (grandSig !== agg.signups) {
-            allocateExact(activeRows, agg.signups, it => it.origSig || it.signups, (it, val) => { it.signups = val; });
+            allocateExact(activeRows, agg.signups, it => it.signups || 1, (it, val) => { it.signups = val; });
           }
           if (grandFtd !== agg.users) {
-            allocateExact(activeRows, agg.users, it => it.ftds || it.signups, (it, val) => { it.ftds = val; });
+            allocateExact(activeRows, agg.users, it => it.ftds || it.signups || 1, (it, val) => { it.ftds = val; });
           }
-
           // Recalcular subtotales por ESP
           const espSums = {};
           activeRows.forEach(r => {
@@ -1436,7 +1409,7 @@
           newBreakdownRows.forEach(r => {
             if (r.is_total && !r.is_overall) {
               const espName = r.esp_ip.replace(/^GRAND TOTAL\s+/i, '').trim();
-              if (espSums[espName] !== undefined) {
+              if (espSums[espName]) {
                 r.signups = espSums[espName].signups;
                 r.ftds = espSums[espName].ftds;
               }
