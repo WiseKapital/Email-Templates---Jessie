@@ -111,6 +111,7 @@
         <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between"><p class="text-[11px] font-semibold text-slate-500 uppercase">Delivered</p><p id="kpiDelivered" class="text-xl font-bold text-slate-900 mt-1">0</p><span class="text-[10px] text-slate-400 mt-1">Filtered sent</span></div>
         <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between"><p class="text-[11px] font-semibold text-slate-500 uppercase">Open</p><p id="kpiOpened" class="text-xl font-bold text-emerald-700 mt-1">0</p><span id="kpiOpenRate" class="text-[10px] font-semibold text-emerald-600 mt-1">0.00% Open Rate</span></div>
         
+        <!-- TARJETA CLICK ACTUALIZADA CON RUN-RATE -->
         <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between">
           <p class="text-[11px] font-semibold text-slate-500 uppercase">Click</p>
           <p id="kpiClicked" class="text-xl font-bold text-sky-700 mt-1">0</p>
@@ -135,7 +136,7 @@
         <div class="px-6 py-3.5 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
           <div class="flex items-center gap-3">
             <h3 class="text-sm font-bold text-slate-800 uppercase tracking-wider">Email Performance by ESP</h3>
-            <button id="toggleTableBtn" onclick="toggleTableDetails()" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold bg-[#485c44] hover:bg-[#3b4c37] text-white shadow-sm cursor-pointer">
+            <button id="toggleTableBtn" onclick="toggleTableDetails()" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold bg-[#485c44] hover:bg-[#3b4c37] text-white shadow-sm">
               <svg id="btnIcon" class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
               <span id="btnText">Show All</span>
             </button>
@@ -153,19 +154,11 @@
         </div>
       </section>
 
-      <!-- TABLA: ESP / IP BREAKDOWN CON BOTÓN SHOW ALL / COLLAPSE ALL -->
+      <!-- TABLA: ESP / IP BREAKDOWN -->
       <section class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-        <div class="px-6 py-3.5 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
-          <div>
-            <div class="flex items-center gap-3">
-              <h3 class="text-sm font-bold text-slate-800 uppercase tracking-wider">ESP / IP Breakdown</h3>
-              <button id="toggleEspIpBtn" onclick="toggleEspIpBreakdownDetails()" type="button" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold bg-[#1e293b] hover:bg-slate-700 text-white shadow-sm cursor-pointer transition-colors">
-                <svg id="espIpBtnIcon" class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-                <span id="espIpBtnText">Show All</span>
-              </button>
-            </div>
-            <p class="text-xs text-slate-500 mt-0.5">Sign Ups & FTDs distribution by ESP / IP, Advertisers and Brands</p>
-          </div>
+        <div class="px-6 py-4 border-b border-slate-100 bg-slate-50/50">
+          <h3 class="text-sm font-bold text-slate-800 uppercase tracking-wider">ESP / IP Breakdown</h3>
+          <p class="text-xs text-slate-500 mt-0.5">Sign Ups & FTDs distribution by ESP / IP, Advertisers and Brands</p>
         </div>
         <div class="overflow-x-auto">
           <table id="espIpBreakdownTable" class="w-full text-sm excel-table">
@@ -237,7 +230,7 @@
       <section class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
         <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
           <div><h3 class="text-sm font-bold text-slate-800 uppercase">Advertiser Breakdown Table</h3><p class="text-xs text-slate-500">Metrics: Conversion S2P Ratio (1:X) & Revenue</p></div>
-          <button onclick="resetTable('advertiserTable')" class="px-3 py-1.5 rounded-lg text-xs font-semibold border border-slate-300 bg-white hover:bg-slate-50 cursor-pointer">Clear / Reset Table</button>
+          <button onclick="resetTable('advertiserTable')" class="px-3 py-1.5 rounded-lg text-xs font-semibold border border-slate-300 bg-white hover:bg-slate-50">Clear / Reset Table</button>
         </div>
         <div class="overflow-x-auto">
           <table id="advertiserTable" class="w-full text-sm text-right excel-table">
@@ -265,7 +258,7 @@
       <section class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
         <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
           <div><h3 class="text-sm font-bold text-slate-800 uppercase">Brand Breakdown Table</h3><p class="text-xs text-slate-500">Performance by Brand & Conversion S2P Ratio</p></div>
-          <button onclick="resetTable('brandTable')" class="px-3 py-1.5 rounded-lg text-xs font-semibold border border-slate-300 bg-white hover:bg-slate-50 cursor-pointer">Clear / Reset Table</button>
+          <button onclick="resetTable('brandTable')" class="px-3 py-1.5 rounded-lg text-xs font-semibold border border-slate-300 bg-white hover:bg-slate-50">Clear / Reset Table</button>
         </div>
         <div class="overflow-x-auto">
           <table id="brandTable" class="w-full text-sm text-right excel-table">
@@ -300,18 +293,10 @@
     let globalLoadedMonths = [], areDetailsExpanded = false, chartRefs = {};
     const initialTableState = {}, tableSortDirections = {}, csvCache = {};
 
-    let isEspIpExpanded = false;
-    let cachedDetailedBreakdownRows = [];
-
     const MIN_ALLOWED_DATE = '2026-07-01';
     const START_YEAR = 2026;
 
-    // Regla de exclusión estricta: elimina ESPs inválidos o residuales
-    const isExcludedEsp = name => {
-      const u = (name || '').toUpperCase();
-      return u.includes('CAM') || u.includes('CAMPAIGNER') || u.includes('SMPT') || u.includes('SMTP');
-    };
-
+    // Detectar el año actual en tiempo real
     const getCurrentYear = () => new Date().getFullYear();
 
     const getTodayIso = () => { 
@@ -319,6 +304,7 @@
       return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; 
     };
     
+    // Inicialización dinámica: siempre inicia en el mes y día actual
     const _initToday = getTodayIso();
     let currentStartDate = _initToday.substring(0, 8) + '01';
     let currentEndDate = _initToday;
@@ -329,6 +315,7 @@
     const formatS2P = (s, u) => u > 0 ? (s === 0 ? '0:1' : `1:${Math.round(s/u)}`) : (s > 0 ? `0:${s}` : '0:0');
     const isoToDisplay = s => s ? `${s.split('-')[1]}/${s.split('-')[2]}/${s.split('-')[0]}` : '';
 
+    // Cargar JSON por mes y año dinámico
     async function fetchMonthFile(mKey, year = getCurrentYear()) {
       const capKey = mKey.charAt(0).toUpperCase() + mKey.slice(1);
       const ts = Date.now();
@@ -359,6 +346,7 @@
       return null;
     }
 
+    // Escanear todos los meses desde 2026 hasta el año detectado actual
     async function loadAllMonths() {
       const currentYear = getCurrentYear();
       const years = [];
@@ -389,6 +377,7 @@
       return uniqueMonths;
     }
 
+    // Por defecto siempre establece el mes y día actual
     function initDateControls() {
       const todayIso = getTodayIso();
       currentStartDate = todayIso.substring(0, 8) + '01';
@@ -480,6 +469,7 @@
       }
     });
 
+    // CSV PARSER
     const parseNum = v => parseFloat(String(v || 0).replace(/["', ]/g, '')) || 0;
     
     function parseCsvLine(line) {
@@ -519,7 +509,7 @@
         const domName = c[1];
         if (!c[0] && domName && domName.toUpperCase() !== 'DOMAIN' && domName.toUpperCase() !== 'TOTAL') {
           const full = curIp ? `${curEsp} ${curIp}`.trim() : curEsp.trim();
-          if (!full || isExcludedEsp(full)) continue;
+          if (!full) continue;
 
           if (!map[full]) map[full] = { esp: full, delivered: 0, softBounce: 0, hardBounce: 0, bounced: 0, opened: 0, clicked: 0, unsub: 0, signups: 0, players: 0, domains: {} };
           
@@ -541,6 +531,7 @@
       return Object.keys(map).length > 0 ? map : null;
     }
 
+    // LECTURA DINÁMICA DE CSVS: {AÑO}/maildata/maildata_{mes}/{dia}.csv
     async function fetchCsvDay(m, d, y = getCurrentYear()) {
       const k = `${y}/${m}/${d}`;
       if (csvCache[k]) return csvCache[k];
@@ -645,6 +636,7 @@
       return merged;
     }
 
+    // JSON AGGREGATOR MULTI-MES INTEGRADO
     function aggregateJsonData(s, e) {
       const agg = {
         budget: 0, signups: 0, users: 0, revenue: 0, daysElapsedInRange: 0, totalMonthDays: 0,
@@ -665,7 +657,7 @@
         const espIp = (espIpRaw || 'Other').trim();
         const adv = (advRaw || '-').trim();
         const br = (brRaw || '-').trim();
-        if (!espIp || espIp.toUpperCase().includes('TOTAL') || isExcludedEsp(espIp)) return;
+        if (!espIp || espIp.toUpperCase().includes('TOTAL')) return;
 
         const key = `${adv}___${br}`;
         if (!espIpMap[espIp]) {
@@ -788,287 +780,40 @@
       return agg;
     }
 
-    function getAdvertiserRollupRows(detailedRows) {
-      const advMap = {};
-      const order = [];
-
-      detailedRows.forEach(r => {
-        if (r.is_total || r.is_overall) return;
-        const esp = r.esp_ip;
-        const adv = r.advertiser;
-        const key = `${esp}___${adv}`;
-        if (!advMap[key]) {
-          advMap[key] = {
-            esp_ip: esp,
-            advertiser: adv,
-            brand: 'All Brands',
-            signups: 0,
-            ftds: 0,
-            brandCount: 0
-          };
-          order.push(key);
-        }
-        advMap[key].signups += (r.signups || 0);
-        advMap[key].ftds += (r.ftds || 0);
-        advMap[key].brandCount++;
-      });
-
-      const collapsedRows = [];
-      const espGroups = {};
-      order.forEach(k => {
-        const item = advMap[k];
-        if (!espGroups[item.esp_ip]) espGroups[item.esp_ip] = [];
-        espGroups[item.esp_ip].push(item);
-      });
-
-      let grandSig = 0, grandFtd = 0;
-      Object.entries(espGroups).forEach(([espName, items]) => {
-        items.sort((a, b) => (b.signups + b.ftds * 10) - (a.signups + a.ftds * 10));
-
-        let subSig = 0, subFtd = 0;
-        items.forEach(it => {
-          collapsedRows.push(it);
-          subSig += it.signups;
-          subFtd += it.ftds;
-        });
-
-        collapsedRows.push({
-          esp_ip: `GRAND TOTAL ${espName}`,
-          advertiser: '',
-          brand: '',
-          signups: subSig,
-          ftds: subFtd,
-          is_total: true
-        });
-
-        grandSig += subSig;
-        grandFtd += subFtd;
-      });
-
-      if (collapsedRows.length > 0) {
-        collapsedRows.push({
-          esp_ip: 'OVERALL GRAND TOTAL',
-          advertiser: '',
-          brand: '',
-          signups: grandSig,
-          ftds: grandFtd,
-          is_total: true,
-          is_overall: true
-        });
-      }
-
-      return collapsedRows;
-    }
-
-    function toggleEspIpBreakdownDetails() {
-      isEspIpExpanded = !isEspIpExpanded;
-      const btnText = $('espIpBtnText');
-      const btnIcon = $('espIpBtnIcon');
-      if (btnText) btnText.textContent = isEspIpExpanded ? 'Collapse All' : 'Show All';
-      if (btnIcon) {
-        btnIcon.innerHTML = isEspIpExpanded
-          ? '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path>'
-          : '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>';
-      }
-      renderEspIpBreakdown(cachedDetailedBreakdownRows);
-    }
-
     async function updateDashboardForDateRange() {
       const agg = aggregateJsonData(currentStartDate, currentEndDate);
       const csvMap = await aggregateCsvForRange(currentStartDate, currentEndDate);
 
-      // Lista de ESPs activas reales (que efectivamente enviaron correos, delivered > 0)
-      const espList = Object.values(csvMap)
-        .filter(e => !isExcludedEsp(e.esp) && (e.delivered || 0) > 0)
-        .sort((a, b) => (b.clicked * 10 + b.delivered) - (a.clicked * 10 + a.delivered));
+      const espTotalsFromBreakdown = {};
+      let totalBreakdownSignups = 0;
+      let totalBreakdownFtds = 0;
 
-      const activeEsps = espList.length > 0 
-        ? espList.map(e => e.esp) 
-        : ['SEG (Sendgrid) IP 2 / SH', 'SEG (Sendgrid) IP 1', 'MLJ (Mailjet) IP 2', 'MLJ (Mailjet) IP 1'];
-
-      // 1. Mapear las filas existentes en breakdownByEsp respetando sus números originales
-      const breakdownByEsp = {};
       (agg.esp_ip_breakdown || []).forEach(r => {
         if (r.is_total || r.is_overall) return;
-        const esp = (r.esp_ip || '').trim();
-        const adv = (r.advertiser || '-').trim();
-        const br = (r.brand || '-').trim();
-        if (!esp || isExcludedEsp(esp)) return;
-
-        const sig = r.signups || 0;
-        const ftd = r.ftds || 0;
-
-        const key = `${adv}___${br}`;
-        if (!breakdownByEsp[esp]) breakdownByEsp[esp] = {};
-        if (!breakdownByEsp[esp][key]) {
-          breakdownByEsp[esp][key] = {
-            esp_ip: esp,
-            advertiser: adv,
-            brand: br,
-            signups: 0,
-            ftds: 0,
-            origSig: 0,
-            origFtd: 0
-          };
+        const key = (r.esp_ip || '').trim();
+        if (!key) return;
+        if (!espTotalsFromBreakdown[key]) {
+          espTotalsFromBreakdown[key] = { signups: 0, ftds: 0 };
         }
-
-        breakdownByEsp[esp][key].signups += sig;
-        breakdownByEsp[esp][key].ftds += ftd;
-        breakdownByEsp[esp][key].origSig += sig;
-        breakdownByEsp[esp][key].origFtd += ftd;
+        espTotalsFromBreakdown[key].signups += (r.signups || 0);
+        espTotalsFromBreakdown[key].ftds += (r.ftds || 0);
+        totalBreakdownSignups += (r.signups || 0);
+        totalBreakdownFtds += (r.ftds || 0);
       });
 
-      // Función de distribución por resto mayor
-      const allocateDelta = (items, delta, getWeight, addVal) => {
-        if (delta <= 0 || !items || items.length === 0) return;
-        const eligible = items.filter(it => (getWeight(it) || 0) > 0);
-        if (eligible.length === 0) return;
-
-        let totalW = eligible.reduce((s, it) => s + getWeight(it), 0);
-        if (totalW <= 0) return;
-
-        const weights = eligible.map(it => getWeight(it) / totalW);
-        const quotas = weights.map(w => delta * w);
-        const ints = quotas.map(q => Math.floor(q));
-        let leftover = delta - ints.reduce((a, b) => a + b, 0);
-        const rems = quotas.map((q, idx) => ({ idx, r: q - Math.floor(q) }));
-        rems.sort((a, b) => b.r - a.r);
-        for (let i = 0; i < leftover; i++) ints[rems[i].idx]++;
-        eligible.forEach((it, idx) => addVal(it, ints[idx]));
-      };
-
-      // 2. RECONCILIACIÓN ESTRICTA:
-      // - Si viene con 0 en signups o ftds, NO se le asigna.
-      // - Si la IP tiene Delivered en 0, NO se le asigna MÁS signups ni ftds.
-      let unassignedRotation = 0;
-      Object.entries(agg.brands).forEach(([bName, bData]) => {
-        const targetSig = bData.signups || 0;
-        const targetFtd = bData.users || 0;
-        const adv = bData.advertiser || '-';
-
-        if (targetSig === 0 && targetFtd === 0) return;
-
-        const matching = [];
-        Object.entries(breakdownByEsp).forEach(([esp, group]) => {
-          Object.values(group).forEach(item => {
-            if (item.brand.toLowerCase() === bName.toLowerCase()) {
-              matching.push(item);
-            }
-          });
-        });
-
-        if (matching.length > 0) {
-          const curSig = matching.reduce((s, it) => s + (it.signups || 0), 0);
-          const curFtd = matching.reduce((s, it) => s + (it.ftds || 0), 0);
-
-          // REGLA PARA SIGNUPS:
-          // 1. Debe haber venido con origSig > 0 (si vino en 0, NADA).
-          // 2. La IP NO debe tener Delivered en 0 (delivered > 0).
-          if (targetSig > curSig) {
-            const deltaSig = targetSig - curSig;
-            const sigEligible = matching.filter(it => {
-              const deliv = csvMap[it.esp_ip]?.delivered || 0;
-              return (it.origSig || 0) > 0 && deliv > 0;
-            });
-            if (sigEligible.length > 0) {
-              allocateDelta(sigEligible, deltaSig, it => it.origSig, (it, val) => { it.signups += val; });
-            }
-          }
-
-          // REGLA PARA FTDS / PLAYERS:
-          // 1. Debe haber venido con origFtd > 0 (si vino en 0, NADA).
-          // 2. La IP NO debe tener Delivered en 0 (delivered > 0).
-          if (targetFtd > curFtd) {
-            const deltaFtd = targetFtd - curFtd;
-            const ftdEligible = matching.filter(it => {
-              const deliv = csvMap[it.esp_ip]?.delivered || 0;
-              return (it.origFtd || 0) > 0 && deliv > 0;
-            });
-            if (ftdEligible.length > 0) {
-              allocateDelta(ftdEligible, deltaFtd, it => it.origFtd, (it, val) => { it.ftds += val; });
-            }
-          }
-        } else {
-          // Marcas no desglosadas por ESP (ej. CardCrush) se asignan a IPs activas
-          // SOLO a IPs activas que tengan Delivered > 0 (nunca a IPs con delivered == 0)
-          const chosenEsp = activeEsps[unassignedRotation % activeEsps.length];
-          unassignedRotation++;
-
-          if (!breakdownByEsp[chosenEsp]) breakdownByEsp[chosenEsp] = {};
-          const key = `${adv}___${bName}`;
-          breakdownByEsp[chosenEsp][key] = {
-            esp_ip: chosenEsp,
-            advertiser: adv,
-            brand: bName,
-            signups: targetSig,
-            ftds: targetFtd,
-            origSig: targetSig,
-            origFtd: targetFtd
-          };
+      const norm = s => (s || '').toLowerCase().replace(/\s+/g, ' ').trim();
+      function getBreakdownForEsp(espName) {
+        const target = norm(espName);
+        for (const [k, v] of Object.entries(espTotalsFromBreakdown)) {
+          if (norm(k) === target) return v;
         }
-      });
-
-      // 3. Reconstruir filas detalladas de la tabla ESP / IP Breakdown
-      const sortOrder = ['MLJ (Mailjet) IP 1', 'MLJ (Mailjet) IP 2', 'MLJ (Mailjet) IP 3 / SH', 'SEG (Sendgrid) IP 1', 'SEG (Sendgrid) IP 2 / SH'];
-      const allKnownEsps = Array.from(new Set([...sortOrder, ...Object.keys(breakdownByEsp)])).filter(e => !isExcludedEsp(e));
-
-      const newBreakdownRows = [];
-      let grandSig = 0, grandFtd = 0;
-
-      allKnownEsps.forEach(espName => {
-        const group = breakdownByEsp[espName] || {};
-        const items = Object.values(group).filter(it => (it.signups || 0) > 0 || (it.ftds || 0) > 0);
-        if (items.length === 0) return;
-
-        items.sort((a, b) => ((b.signups || 0) + (b.ftds || 0) * 10) - ((a.signups || 0) + (a.ftds || 0) * 10));
-
-        let subSig = 0, subFtd = 0;
-        items.forEach(it => {
-          newBreakdownRows.push(it);
-          subSig += (it.signups || 0);
-          subFtd += (it.ftds || 0);
-        });
-
-        newBreakdownRows.push({
-          esp_ip: `GRAND TOTAL ${espName}`,
-          advertiser: '',
-          brand: '',
-          signups: subSig,
-          ftds: subFtd,
-          is_total: true
-        });
-
-        grandSig += subSig;
-        grandFtd += subFtd;
-      });
-
-      if (newBreakdownRows.length > 0) {
-        newBreakdownRows.push({
-          esp_ip: 'OVERALL GRAND TOTAL',
-          advertiser: '',
-          brand: '',
-          signups: grandSig,
-          ftds: grandFtd,
-          is_total: true,
-          is_overall: true
-        });
+        for (const [k, v] of Object.entries(espTotalsFromBreakdown)) {
+          if (norm(k).includes(target) || target.includes(norm(k))) return v;
+        }
+        return { signups: 0, ftds: 0 };
       }
 
-      agg.esp_ip_breakdown = newBreakdownRows;
-
-      // 4. Actualizar dinámicamente la tabla superior de ESP con los subtotales reconciliados
-      const espTotalsFromBreakdown = {};
-      newBreakdownRows.forEach(r => {
-        if (r.is_total && !r.is_overall) {
-          const espName = r.esp_ip.replace(/^GRAND TOTAL\s+/i, '').trim();
-          if (!isExcludedEsp(espName)) {
-            espTotalsFromBreakdown[espName] = { signups: r.signups || 0, ftds: r.ftds || 0 };
-          }
-        }
-      });
-
-      // Asegurar que todas las ESPs conocidas existan en csvMap para que se muestren en la tabla aunque tengan 0
-      sortOrder.forEach(espName => {
+      Object.keys(espTotalsFromBreakdown).forEach(espName => {
         if (!csvMap[espName]) {
           csvMap[espName] = {
             esp: espName, delivered: 0, softBounce: 0, hardBounce: 0,
@@ -1078,40 +823,34 @@
       });
 
       Object.values(csvMap).forEach(item => {
-        if (!isExcludedEsp(item.esp)) {
-          const bd = espTotalsFromBreakdown[item.esp] || { signups: 0, ftds: 0 };
-          item.signups = bd.signups || 0;
-          item.players = bd.ftds || 0;
-        }
+        const bd = getBreakdownForEsp(item.esp);
+        item.signups = bd.signups;
+        item.players = bd.ftds;
       });
 
-      const list = Object.values(csvMap).filter(e => !isExcludedEsp(e.esp));
-      list.sort((a, b) => {
-        const idxA = sortOrder.indexOf(a.esp);
-        const idxB = sortOrder.indexOf(b.esp);
-        return (idxA !== -1 ? idxA : 99) - (idxB !== -1 ? idxB : 99);
-      });
-
-      // NO ocultar las IPs con 0: mostrar todas las conocidas
-      agg.esp = list;
-
+      const list = Object.values(csvMap);
+      agg.esp = list.filter(e => e.delivered > 0 || e.signups > 0 || e.opened > 0 || e.players > 0);
+      
       ['delivered','softBounce','hardBounce','bounced','opened','clicked','unsub'].forEach(k => {
         agg[k] = agg.esp.reduce((acc, cur) => acc + (cur[k] || 0), 0);
       });
 
-      agg.espSignups = grandSig;
-      agg.espPlayers = grandFtd;
+      agg.espSignups = totalBreakdownSignups;
+      agg.espPlayers = totalBreakdownFtds;
 
       renderDashboard(agg, currentStartDate, currentEndDate);
     }
 
     function renderDashboard(agg, s, e) {
+      // CÁLCULO PRECISO DEL RUN-RATE SEGÚN EL DÍA DEL MES / RANGO SELECCIONADO
       const [sy, sm, sd] = s.split('-').map(Number);
       const [ey, em, ed] = e.split('-').map(Number);
       
+      // Días totales del mes correspondiente a la fecha final (ej: Noviembre = 30)
       const daysInEndMonth = new Date(ey, em, 0).getDate();
       const totalMonthDays = agg.totalMonthDays > 0 ? agg.totalMonthDays : daysInEndMonth;
 
+      // Si el rango es desde el día 1 en el mismo mes, los días transcurridos son exactamente 'ed' (el día actual)
       let elapsedDays = (sy === ey && sm === em && sd === 1)
         ? ed
         : Math.max(1, Math.round((new Date(ey, em - 1, ed) - new Date(sy, sm - 1, sd)) / (1000 * 60 * 60 * 24)) + 1);
@@ -1120,6 +859,7 @@
       const [rrB, rrS, rrU, rrR, rrP] = [agg.budget, agg.signups, agg.users, agg.revenue, agg.profit].map(v => Math.round(v * rrF));
       const rrClicks = Math.round((agg.clicked || 0) * rrF);
 
+      // Team Table
       setT('teamKpiBudget', `$${Math.round(agg.kpi.budget).toLocaleString()}`);
       setT('teamKpiSignups', Math.round(agg.kpi.signups).toLocaleString());
       setT('teamKpiUsers', Math.round(agg.kpi.users).toLocaleString());
@@ -1145,6 +885,7 @@
       setRrCell('teamRrProfit', `$${rrP.toLocaleString()}`, rrP, Math.round(agg.kpi.profit));
       setT('teamRrRoi', `1:${rrB > 0 ? (rrR / rrB).toFixed(1) : '0.0'}`);
 
+      // Cards
       setT('kpiDelivered', (agg.delivered||0).toLocaleString()); 
       setT('kpiOpened', (agg.opened||0).toLocaleString());
       setT('kpiClicked', (agg.clicked||0).toLocaleString()); 
@@ -1160,8 +901,10 @@
       setT('kpiClickRate', `${agg.delivered > 0 ? ((agg.clicked/agg.delivered)*100).toFixed(2) : '0.00'}% Click Rate`);
       setT('kpiBounceRate', `${agg.delivered > 0 ? ((agg.bounced/agg.delivered)*100).toFixed(2) : '0.00'}% bounce`);
       
+      // Run-Rate para Clicks (Fijo en color negro)
       setT('cardRrClicksSub', `RR: ${rrClicks.toLocaleString()}`);
 
+      // Asignación con colores dinámicos en las tarjetas KPI: Verde si RR >= KPI, Rojo si no
       const setCardRr = (id, text, rrVal, kpiVal) => {
         const el = $(id);
         if (!el) return;
@@ -1194,60 +937,24 @@
       updateCharts(agg);
     }
 
-    function renderEspIpBreakdown(detailedRows) {
-      cachedDetailedBreakdownRows = detailedRows || [];
-      const tbody = $('espIpBreakdownTableBody');
-      if (!tbody) return;
-      tbody.innerHTML = '';
-
-      if (!detailedRows || !detailedRows.length) {
-        tbody.innerHTML = `<tr><td colspan="5" class="py-6 text-center text-slate-400 italic">No breakdown data available for this range.</td></tr>`;
-        setT('espIpGrandSignups', '0');
-        setT('espIpGrandFtds', '0');
-        return;
-      }
-
-      const rowsToRender = isEspIpExpanded ? detailedRows : getAdvertiserRollupRows(detailedRows);
-
+    function renderEspIpBreakdown(rows) {
+      const tbody = $('espIpBreakdownTableBody'); tbody.innerHTML = '';
       let gSig = 0, gFtd = 0, hasOverall = false;
-
-      rowsToRender.forEach(r => {
-        if (r.is_overall || r.esp_ip?.toUpperCase().includes('OVERALL GRAND TOTAL')) {
-          gSig = r.signups || 0;
-          gFtd = r.ftds || 0;
-          hasOverall = true;
-          return;
-        }
-
+      if (!rows || !rows.length) { tbody.innerHTML = `<tr><td colspan="5" class="py-6 text-center text-slate-400 italic">No breakdown data available for this range.</td></tr>`; return; }
+      
+      rows.forEach(r => {
+        if (r.is_overall || r.esp_ip?.toUpperCase().includes('OVERALL GRAND TOTAL')) { gSig = r.signups||0; gFtd = r.ftds||0; hasOverall = true; return; }
         const tr = document.createElement('tr');
         if (r.is_total || r.esp_ip?.toUpperCase().startsWith('GRAND TOTAL')) {
           tr.className = 'bg-slate-100 font-bold text-slate-900';
-          tr.innerHTML = `
-            <td colspan="3" class="py-2 px-4 text-left uppercase">${r.esp_ip}</td>
-            <td class="py-2 px-4 text-right font-mono text-amber-600">${(r.signups || 0).toLocaleString()}</td>
-            <td class="py-2 px-4 text-right font-mono text-indigo-600">${(r.ftds || 0).toLocaleString()}</td>
-          `;
+          tr.innerHTML = `<td colspan="3" class="py-2 px-4 text-left uppercase">${r.esp_ip}</td><td class="py-2 px-4 text-right font-mono text-amber-600">${(r.signups||0).toLocaleString()}</td><td class="py-2 px-4 text-right font-mono text-indigo-600">${(r.ftds||0).toLocaleString()}</td>`;
         } else {
           tr.className = 'hover:bg-slate-50 bg-white';
-          const brandDisplay = isEspIpExpanded 
-            ? (r.brand || '-') 
-            : `<span class="text-slate-400 italic text-xs font-normal">All Brands (${r.brandCount || 1})</span>`;
-          
-          tr.innerHTML = `
-            <td class="py-2 px-4 text-left font-medium text-slate-800">${r.esp_ip || '-'}</td>
-            <td class="py-2 px-4 text-left font-semibold text-slate-700">${r.advertiser || '-'}</td>
-            <td class="py-2 px-4 text-left">${brandDisplay}</td>
-            <td class="py-2 px-4 text-right font-mono font-bold text-amber-600">${(r.signups || 0).toLocaleString()}</td>
-            <td class="py-2 px-4 text-right font-mono font-bold text-indigo-600">${(r.ftds || 0).toLocaleString()}</td>
-          `;
-          if (!hasOverall) {
-            gSig += r.signups || 0;
-            gFtd += r.ftds || 0;
-          }
+          tr.innerHTML = `<td class="py-2 px-4 text-left font-medium">${r.esp_ip||'-'}</td><td class="py-2 px-4 text-left">${r.advertiser||'-'}</td><td class="py-2 px-4 text-left">${r.brand||'-'}</td><td class="py-2 px-4 text-right font-mono font-bold text-amber-600">${(r.signups||0).toLocaleString()}</td><td class="py-2 px-4 text-right font-mono font-bold text-indigo-600">${(r.ftds||0).toLocaleString()}</td>`;
+          if (!hasOverall) { gSig += r.signups||0; gFtd += r.ftds||0; }
         }
         tbody.appendChild(tr);
       });
-
       setT('espIpGrandSignups', gSig.toLocaleString());
       setT('espIpGrandFtds', gFtd.toLocaleString());
     }
@@ -1266,6 +973,25 @@
     }
 
     function renderOpsTeam(ops, rrF, kpi) {
+      const regKpi = Math.round(kpi.signups/2) || 250;
+      const userKpi = Math.round(kpi.users/2) || 20;
+      ['jessie','andrea'].forEach(p => {
+        const regRr = Math.round(ops[p].signups * rrF);
+        const usersRr = Math.round(ops[p].users * rrF);
+        setT(`${p}KpiReg`, regKpi); setT(`${p}KpiUsers`, userKpi);
+        setT(`${p}RegMtd`, ops[p].signups); setT(`${p}UsersMtd`, ops[p].users);
+        
+        const rEl = $(`${p}RegRr`);
+        if (rEl) {
+          rEl.textContent = regRr;
+          rEl.className = `font-bold ${regRr >= regKpi ? 'text-emerald-600' : 'text-rose-600'}`;
+        }
+        const uEl = $(`${p}UsersRr`);
+        if (uEl) {
+          uEl.textContent = usersRr;
+          uEl.className = `font-bold ${usersRr >= userKpi ? 'text-emerald-600' : 'text-rose-600'}`;
+        }
+      });
       ['signups','users'].forEach(kind => {
         const tb = $(`ops${kind==='signups'?'Signups':'Users'}TableBody`), master = ops[`${kind}_by_advertiser`];
         tb.innerHTML = '';
