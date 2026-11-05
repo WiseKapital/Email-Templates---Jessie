@@ -877,7 +877,7 @@
       const agg = aggregateJsonData(currentStartDate, currentEndDate);
       const csvMap = await aggregateCsvForRange(currentStartDate, currentEndDate);
 
-      // Lista de ESPs activas reales (que efectivamente enviaron correos o tuvieron clics)
+      // Lista de ESPs activas reales (que enviaron correos en este rango)
       const espList = Object.values(csvMap)
         .filter(e => !isExcludedEsp(e.esp) && ((e.delivered || 0) > 0 || (e.clicked || 0) > 0))
         .sort((a, b) => (b.clicked * 10 + b.delivered) - (a.clicked * 10 + a.delivered));
@@ -886,25 +886,17 @@
         ? espList.map(e => e.esp) 
         : ['SEG (Sendgrid) IP 2 / SH', 'SEG (Sendgrid) IP 1', 'MLJ (Mailjet) IP 2', 'MLJ (Mailjet) IP 1'];
 
-      // 1. Mapear las filas existentes en breakdownByEsp sanitizando IPs inactivas
+      // 1. Mapear las filas existentes en breakdownByEsp RESPETANDO EXACTAMENTE sus números originales
       const breakdownByEsp = {};
       (agg.esp_ip_breakdown || []).forEach(r => {
         if (r.is_total || r.is_overall) return;
-        let esp = (r.esp_ip || '').trim();
+        const esp = (r.esp_ip || '').trim();
         const adv = (r.advertiser || '-').trim();
         const br = (r.brand || '-').trim();
         if (!esp || isExcludedEsp(esp)) return;
 
         const sig = r.signups || 0;
         const ftd = r.ftds || 0;
-
-        // Si la IP tuvo 0 envíos y 0 clics (inactiva, ej. MLJ IP 3 / SH),
-        // reasignamos a una IP activa del mismo proveedor para no perder la conversión ni falsear la IP inactiva
-        const espHasTraffic = (csvMap[esp]?.delivered || 0) > 0 || (csvMap[esp]?.clicked || 0) > 0;
-        if (!espHasTraffic && (sig > 0 || ftd > 0)) {
-          const sameFamily = activeEsps.find(ae => ae.substring(0, 3) === esp.substring(0, 3));
-          esp = sameFamily || activeEsps[0];
-        }
 
         const key = `${adv}___${br}`;
         if (!breakdownByEsp[esp]) breakdownByEsp[esp] = {};
@@ -920,13 +912,14 @@
           };
         }
 
+        // Si ya venía con números en el JSON, se respetan tal cual (incluso si la IP tiene 0 en envíos)
         breakdownByEsp[esp][key].signups += sig;
         breakdownByEsp[esp][key].ftds += ftd;
         breakdownByEsp[esp][key].origSig += sig;
         breakdownByEsp[esp][key].origFtd += ftd;
       });
 
-      // Función auxiliar genérica de distribución por cuota de resto mayor (solo > 0)
+      // Función de distribución por resto mayor
       const allocateDelta = (items, delta, getWeight, addVal) => {
         if (delta <= 0 || !items || items.length === 0) return;
         const eligible = items.filter(it => (getWeight(it) || 0) > 0);
@@ -945,7 +938,7 @@
         eligible.forEach((it, idx) => addVal(it, ints[idx]));
       };
 
-      // 2. RECONCILIACIÓN INTEGRAL: GARANTIZA TOTALES EXACTOS (43 y 4) SIN ASIGNAR A REGISTROS EN 0
+      // 2. RECONCILIACIÓN ESTRICTA: SOLO ASIGNAR DELTAS A LOS QUE ORIGINARIAMENTE SEAN > 0
       let unassignedRotation = 0;
       Object.entries(agg.brands).forEach(([bName, bData]) => {
         const targetSig = bData.signups || 0;
@@ -967,32 +960,27 @@
           const curSig = matching.reduce((s, it) => s + (it.signups || 0), 0);
           const curFtd = matching.reduce((s, it) => s + (it.ftds || 0), 0);
 
-          // Si falta asignar delta, SOLO se suma a filas que ORIGINALMENTE tengan > 0
+          // REGLA: Si falta signups, SOLO se distribuye entre filas con origSig > 0.
+          // A las filas que venían en 0, NO se les asigna nada.
           if (targetSig > curSig) {
             const deltaSig = targetSig - curSig;
             const sigEligible = matching.filter(it => (it.origSig || 0) > 0);
             if (sigEligible.length > 0) {
               allocateDelta(sigEligible, deltaSig, it => it.origSig, (it, val) => { it.signups += val; });
-            } else {
-              // Si todas venían en 0, se le asigna a la IP activa con mayor entrega
-              matching.sort((a, b) => (csvMap[b.esp_ip]?.delivered || 0) - (csvMap[a.esp_ip]?.delivered || 0));
-              matching[0].signups += deltaSig;
             }
           }
 
+          // REGLA: Si falta FTDs, SOLO se distribuye entre filas con origFtd > 0.
+          // A las filas que venían en 0, NO se les asigna nada.
           if (targetFtd > curFtd) {
             const deltaFtd = targetFtd - curFtd;
             const ftdEligible = matching.filter(it => (it.origFtd || 0) > 0);
             if (ftdEligible.length > 0) {
               allocateDelta(ftdEligible, deltaFtd, it => it.origFtd, (it, val) => { it.ftds += val; });
-            } else {
-              matching.sort((a, b) => (b.signups || 0) - (a.signups || 0));
-              matching[0].ftds += deltaFtd;
             }
           }
         } else {
-          // Si la marca (ej. CardCrush) no venía en breakdownByEsp, se asigna a una IP activa real
-          // NUNCA a IPs con 0 envíos/inactivas
+          // Marcas completas que no estaban en el desglose diario (ej. CardCrush) se asignan a IPs activas
           const chosenEsp = activeEsps[unassignedRotation % activeEsps.length];
           unassignedRotation++;
 
@@ -1019,6 +1007,7 @@
 
       allKnownEsps.forEach(espName => {
         const group = breakdownByEsp[espName] || {};
+        // Mostrar cualquier fila que tenga Signups > 0 o FTDs > 0 (incluyendo IPs con volumen 0 si ya venían con conversiones)
         const items = Object.values(group).filter(it => (it.signups || 0) > 0 || (it.ftds || 0) > 0);
         if (items.length === 0) return;
 
@@ -1082,10 +1071,9 @@
       Object.values(csvMap).forEach(item => {
         if (!isExcludedEsp(item.esp)) {
           const bd = espTotalsFromBreakdown[item.esp] || { signups: 0, ftds: 0 };
-          // Si la IP no envió correos, sus signups y players son estrictamente 0
-          const hasDelivery = (item.delivered || 0) > 0 || (item.clicked || 0) > 0;
-          item.signups = hasDelivery ? (bd.signups || 0) : 0;
-          item.players = hasDelivery ? (bd.ftds || 0) : 0;
+          // Respetar exactamente lo que reportó el desglose (no poner en 0 si ya traía conversiones reales)
+          item.signups = bd.signups || 0;
+          item.players = bd.ftds || 0;
         }
       });
 
