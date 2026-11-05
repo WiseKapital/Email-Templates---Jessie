@@ -1,70 +1,158 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-  <meta http-equiv="Pragma" content="no-cache"><meta http-equiv="Expires" content="0">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
   <title>Performance Dashboard - Email & Advertisers</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+    rel="stylesheet">
   <style>
-    body { font-family: 'Inter', sans-serif; }
-    .theme-header { background-color: #1e40af; } .theme-header-ops { background-color: #dbeafe; } .theme-header-aff { background-color: #1e293b; }
-    .excel-table { border-collapse: collapse !important; border: 1.5px solid #64748b !important; width: 100%; }
-    .excel-table th, .excel-table td { border: 1px solid #94a3b8 !important; }
-    .excel-table thead th { border: 1px solid #1e3a8a !important; border-bottom: 2px solid #0f172a !important; }
-    .excel-table thead tr.sort-row th { border: none !important; background: #fff !important; padding: 8px !important; }
-    .esp-table { border-collapse: collapse; width: 100%; }
-    .esp-table th { background: #485c44; color: #fff; font-weight: 700; letter-spacing: 0.05em; border-bottom: 2px solid #3b4c37; }
-    .esp-table tbody tr.esp-summary-row { background: #f8faf8; border-bottom: 1.5px solid #cbd5e1; font-weight: 600; }
-    .esp-table tbody tr.esp-summary-row:hover { background: #eef2ee; }
-    .esp-table tbody tr.domain-row { border-bottom: 1px solid #f1f5f9; background: #fff; }
-    .esp-table tbody tr.domain-row:hover { background: #f8fafc; }
-    .esp-table tfoot { border-top: 2.5px solid #485c44; background: #fff; }
+    body {
+      font-family: 'Inter', sans-serif;
+    }
+
+    .theme-header {
+      background-color: #1e40af;
+    }
+
+    .theme-header-ops {
+      background-color: #dbeafe;
+    }
+
+    .theme-header-aff {
+      background-color: #1e293b;
+    }
+
+    .excel-table {
+      border-collapse: collapse !important;
+      border: 1.5px solid #64748b !important;
+      width: 100%;
+    }
+
+    .excel-table th,
+    .excel-table td {
+      border: 1px solid #94a3b8 !important;
+    }
+
+    .excel-table thead th {
+      border: 1px solid #1e3a8a !important;
+      border-bottom: 2px solid #0f172a !important;
+    }
+
+    .excel-table thead tr.sort-row th {
+      border: none !important;
+      background: #fff !important;
+      padding: 8px !important;
+    }
+
+    .esp-table {
+      border-collapse: collapse;
+      width: 100%;
+    }
+
+    .esp-table th {
+      background: #485c44;
+      color: #fff;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      border-bottom: 2px solid #3b4c37;
+    }
+
+    .esp-table tbody tr.esp-summary-row {
+      background: #f8faf8;
+      border-bottom: 1.5px solid #cbd5e1;
+      font-weight: 600;
+    }
+
+    .esp-table tbody tr.esp-summary-row:hover {
+      background: #eef2ee;
+    }
+
+    .esp-table tbody tr.domain-row {
+      border-bottom: 1px solid #f1f5f9;
+      background: #fff;
+    }
+
+    .esp-table tbody tr.domain-row:hover {
+      background: #f8fafc;
+    }
+
+    .esp-table tfoot {
+      border-top: 2.5px solid #485c44;
+      background: #fff;
+    }
   </style>
 </head>
+
 <body class="bg-slate-50 text-slate-800 antialiased min-h-screen p-4 md:p-8">
   <div class="max-w-7xl mx-auto space-y-8">
 
     <!-- HEADER & CALENDAR -->
-    <header class="flex flex-col lg:flex-row justify-between items-start lg:items-center bg-white p-6 rounded-2xl shadow-sm border border-slate-200 gap-4">
+    <header
+      class="flex flex-col lg:flex-row justify-between items-start lg:items-center bg-white p-6 rounded-2xl shadow-sm border border-slate-200 gap-4">
       <div class="flex flex-col md:flex-row md:items-center gap-5 flex-wrap">
         <div>
           <div class="flex items-center gap-2">
             <span class="w-3 h-3 rounded-full bg-blue-600 animate-pulse"></span>
             <h1 id="dashTitle" class="text-2xl font-bold text-slate-900 tracking-tight">Performance Dashboard</h1>
           </div>
-          <p class="text-sm text-slate-500 mt-0.5">Email Deliverability by ESP (CSVs) & Advertiser Conversions (Multi-Month)</p>
+          <p class="text-sm text-slate-500 mt-0.5">Email Deliverability by ESP (CSVs) & Advertiser Conversions
+            (Multi-Month)</p>
         </div>
         <div class="relative flex items-center gap-3">
           <div class="flex items-center gap-1.5">
             <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">FROM</span>
-            <button type="button" id="fromPillBtn" onclick="toggleCustomCalendar('from')" class="flex items-center gap-2 bg-white border border-[#99d5ca] ring-2 ring-[#e1f5f2] rounded-xl px-3 py-1.5 shadow-xs transition-all hover:bg-slate-50 cursor-pointer focus:outline-none">
+            <button type="button" id="fromPillBtn" onclick="toggleCustomCalendar('from')"
+              class="flex items-center gap-2 bg-white border border-[#99d5ca] ring-2 ring-[#e1f5f2] rounded-xl px-3 py-1.5 shadow-xs transition-all hover:bg-slate-50 cursor-pointer focus:outline-none">
               <span id="fromDisplay" class="text-xs font-bold text-slate-800 font-mono tracking-tight">--/--/----</span>
-              <svg class="w-3.5 h-3.5 text-slate-700 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+              <svg class="w-3.5 h-3.5 text-slate-700 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+              </svg>
             </button>
           </div>
           <div class="flex items-center gap-1.5">
             <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">TO</span>
-            <button type="button" id="toPillBtn" onclick="toggleCustomCalendar('to')" class="flex items-center gap-2 bg-white border border-slate-300 rounded-xl px-3 py-1.5 shadow-xs transition-all hover:border-slate-400 cursor-pointer focus:outline-none">
+            <button type="button" id="toPillBtn" onclick="toggleCustomCalendar('to')"
+              class="flex items-center gap-2 bg-white border border-slate-300 rounded-xl px-3 py-1.5 shadow-xs transition-all hover:border-slate-400 cursor-pointer focus:outline-none">
               <span id="toDisplay" class="text-xs font-bold text-slate-800 font-mono tracking-tight">--/--/----</span>
-              <svg class="w-3.5 h-3.5 text-slate-700 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+              <svg class="w-3.5 h-3.5 text-slate-700 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+              </svg>
             </button>
           </div>
-          <div id="customCalendarPopup" class="hidden absolute top-12 left-0 z-50 w-72 bg-white rounded-[22px] p-5 shadow-2xl border border-slate-100 transition-all select-none">
+          <div id="customCalendarPopup"
+            class="hidden absolute top-12 left-0 z-50 w-72 bg-white rounded-[22px] p-5 shadow-2xl border border-slate-100 transition-all select-none">
             <div class="flex items-center justify-between mb-4">
-              <button type="button" onclick="navigateMonth(-1)" class="p-1.5 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-100"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"></path></svg></button>
-              <span id="calHeaderTitle" class="text-xs font-extrabold text-[#0f172a] uppercase tracking-wider">-- ----</span>
-              <button type="button" id="calNextBtn" onclick="navigateMonth(1)" class="p-1.5 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-100"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"></path></svg></button>
+              <button type="button" onclick="navigateMonth(-1)"
+                class="p-1.5 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-100"><svg class="w-4 h-4"
+                  fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"></path>
+                </svg></button>
+              <span id="calHeaderTitle" class="text-xs font-extrabold text-[#0f172a] uppercase tracking-wider">--
+                ----</span>
+              <button type="button" id="calNextBtn" onclick="navigateMonth(1)"
+                class="p-1.5 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-100"><svg class="w-4 h-4"
+                  fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"></path>
+                </svg></button>
             </div>
-            <div class="grid grid-cols-7 gap-1 text-center mb-2 text-[11px] font-extrabold text-slate-800"><span>MO</span><span>TU</span><span>WE</span><span>TH</span><span>FR</span><span>SA</span><span>SU</span></div>
+            <div class="grid grid-cols-7 gap-1 text-center mb-2 text-[11px] font-extrabold text-slate-800">
+              <span>MO</span><span>TU</span><span>WE</span><span>TH</span><span>FR</span><span>SA</span><span>SU</span>
+            </div>
             <div id="calDaysGrid" class="grid grid-cols-7 gap-1 text-center text-xs font-bold"></div>
           </div>
         </div>
       </div>
-      <span id="dataStatusBadge" class="hidden inline-flex items-center px-3.5 py-1.5 rounded-full text-xs font-semibold bg-rose-100 text-rose-800 border border-rose-200"></span>
+      <span id="dataStatusBadge"
+        class="hidden inline-flex items-center px-3.5 py-1.5 rounded-full text-xs font-semibold bg-rose-100 text-rose-800 border border-rose-200"></span>
     </header>
 
     <!-- TEAM PERFORMANCE OVERVIEW -->
@@ -81,18 +169,44 @@
             </tr>
             <tr class="border-b border-slate-200 text-[11px] font-bold text-slate-400 uppercase h-8 bg-white">
               <th class="px-3 border-r border-slate-100"></th>
-              <th class="px-2.5 py-2">BUDGET</th><th class="px-2.5 py-2">SIGNUPS</th><th class="px-2.5 py-2">USERS</th><th class="px-2.5 py-2">REVENUE</th><th class="px-2.5 py-2 border-r border-slate-200">PROFIT</th>
-              <th class="px-2.5 py-2">BUDGET</th><th class="px-2.5 py-2">SIGNUPS</th><th class="px-2.5 py-2">USERS</th><th class="px-2.5 py-2">REVENUE</th><th class="px-2.5 py-2 border-r border-slate-200">PROFIT</th>
-              <th class="px-2.5 py-2">BUDGET</th><th class="px-2.5 py-2">SIGNUPS</th><th class="px-2.5 py-2">USERS</th><th class="px-2.5 py-2">REVENUE</th><th class="px-2.5 py-2 border-r border-slate-200">PROFIT</th>
+              <th class="px-2.5 py-2">BUDGET</th>
+              <th class="px-2.5 py-2">SIGNUPS</th>
+              <th class="px-2.5 py-2">USERS</th>
+              <th class="px-2.5 py-2">REVENUE</th>
+              <th class="px-2.5 py-2 border-r border-slate-200">PROFIT</th>
+              <th class="px-2.5 py-2">BUDGET</th>
+              <th class="px-2.5 py-2">SIGNUPS</th>
+              <th class="px-2.5 py-2">USERS</th>
+              <th class="px-2.5 py-2">REVENUE</th>
+              <th class="px-2.5 py-2 border-r border-slate-200">PROFIT</th>
+              <th class="px-2.5 py-2">BUDGET</th>
+              <th class="px-2.5 py-2">SIGNUPS</th>
+              <th class="px-2.5 py-2">USERS</th>
+              <th class="px-2.5 py-2">REVENUE</th>
+              <th class="px-2.5 py-2 border-r border-slate-200">PROFIT</th>
               <th class="px-2.5 py-2">ROI</th>
             </tr>
           </thead>
           <tbody class="text-xs font-bold text-slate-800 divide-y divide-slate-100">
             <tr class="h-14 hover:bg-slate-50/70">
-              <td class="text-left px-3 border-r border-slate-100"><span class="px-3.5 py-1 rounded-full text-xs font-bold bg-[#edf2fe] text-[#2563eb]">EMAIL</span></td>
-              <td id="teamKpiBudget" class="px-2.5 py-3 text-sm">$0</td><td id="teamKpiSignups" class="px-2.5 py-3 text-sm">0</td><td id="teamKpiUsers" class="px-2.5 py-3 text-sm">0</td><td id="teamKpiRevenue" class="px-2.5 py-3 text-sm">$0</td><td id="teamKpiProfit" class="px-2.5 py-3 text-sm border-r border-slate-200">$0</td>
-              <td id="teamMtdBudget" class="px-2.5 py-3 text-sm">$0</td><td id="teamMtdSignups" class="px-2.5 py-3 text-sm">0</td><td id="teamMtdUsers" class="px-2.5 py-3 text-sm">0</td><td id="teamMtdRevenue" class="px-2.5 py-3 text-sm">$0</td><td id="teamMtdProfit" class="px-2.5 py-3 text-sm border-r border-slate-200">$0</td>
-              <td id="teamRrBudget" class="px-2.5 py-3 text-sm">$0</td><td id="teamRrSignups" class="px-2.5 py-3 text-sm">0</td><td id="teamRrUsers" class="px-2.5 py-3 text-sm">0</td><td id="teamRrRevenue" class="px-2.5 py-3 text-sm">$0</td><td id="teamRrProfit" class="px-2.5 py-3 text-sm">$0</td><td id="teamRrRoi" class="px-2.5 py-3 text-slate-900 text-sm">0:0</td>
+              <td class="text-left px-3 border-r border-slate-100"><span
+                  class="px-3.5 py-1 rounded-full text-xs font-bold bg-[#edf2fe] text-[#2563eb]">EMAIL</span></td>
+              <td id="teamKpiBudget" class="px-2.5 py-3 text-sm">$0</td>
+              <td id="teamKpiSignups" class="px-2.5 py-3 text-sm">0</td>
+              <td id="teamKpiUsers" class="px-2.5 py-3 text-sm">0</td>
+              <td id="teamKpiRevenue" class="px-2.5 py-3 text-sm">$0</td>
+              <td id="teamKpiProfit" class="px-2.5 py-3 text-sm border-r border-slate-200">$0</td>
+              <td id="teamMtdBudget" class="px-2.5 py-3 text-sm">$0</td>
+              <td id="teamMtdSignups" class="px-2.5 py-3 text-sm">0</td>
+              <td id="teamMtdUsers" class="px-2.5 py-3 text-sm">0</td>
+              <td id="teamMtdRevenue" class="px-2.5 py-3 text-sm">$0</td>
+              <td id="teamMtdProfit" class="px-2.5 py-3 text-sm border-r border-slate-200">$0</td>
+              <td id="teamRrBudget" class="px-2.5 py-3 text-sm">$0</td>
+              <td id="teamRrSignups" class="px-2.5 py-3 text-sm">0</td>
+              <td id="teamRrUsers" class="px-2.5 py-3 text-sm">0</td>
+              <td id="teamRrRevenue" class="px-2.5 py-3 text-sm">$0</td>
+              <td id="teamRrProfit" class="px-2.5 py-3 text-sm">$0</td>
+              <td id="teamRrRoi" class="px-2.5 py-3 text-slate-900 text-sm">0:0</td>
             </tr>
           </tbody>
         </table>
@@ -102,15 +216,28 @@
     <!-- SECTION 1: ESP & ENGAGEMENT -->
     <div class="space-y-6">
       <div class="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-200 pb-2 gap-2">
-        <div class="flex items-center gap-2"><span class="px-2.5 py-0.5 rounded bg-blue-800 text-white text-xs font-bold uppercase">Section 1</span><h2 class="text-lg font-bold text-slate-800">ESP Deliverability & Engagement</h2></div>
-        <span id="dateRangeNotice" class="px-3 py-1 rounded-full text-xs font-semibold bg-blue-50 text-blue-800 border border-blue-200">Filtered Period</span>
+        <div class="flex items-center gap-2"><span
+            class="px-2.5 py-0.5 rounded bg-blue-800 text-white text-xs font-bold uppercase">Section 1</span>
+          <h2 class="text-lg font-bold text-slate-800">ESP Deliverability & Engagement</h2>
+        </div>
+        <span id="dateRangeNotice"
+          class="px-3 py-1 rounded-full text-xs font-semibold bg-blue-50 text-blue-800 border border-blue-200">Filtered
+          Period</span>
       </div>
 
       <!-- KPI CARDS -->
       <section class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 xl:grid-cols-10 gap-3 text-xs">
-        <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between"><p class="text-[11px] font-semibold text-slate-500 uppercase">Delivered</p><p id="kpiDelivered" class="text-xl font-bold text-slate-900 mt-1">0</p><span class="text-[10px] text-slate-400 mt-1">Filtered sent</span></div>
-        <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between"><p class="text-[11px] font-semibold text-slate-500 uppercase">Open</p><p id="kpiOpened" class="text-xl font-bold text-emerald-700 mt-1">0</p><span id="kpiOpenRate" class="text-[10px] font-semibold text-emerald-600 mt-1">0.00% Open Rate</span></div>
-        
+        <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between">
+          <p class="text-[11px] font-semibold text-slate-500 uppercase">Delivered</p>
+          <p id="kpiDelivered" class="text-xl font-bold text-slate-900 mt-1">0</p><span
+            class="text-[10px] text-slate-400 mt-1">Filtered sent</span>
+        </div>
+        <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between">
+          <p class="text-[11px] font-semibold text-slate-500 uppercase">Open</p>
+          <p id="kpiOpened" class="text-xl font-bold text-emerald-700 mt-1">0</p><span id="kpiOpenRate"
+            class="text-[10px] font-semibold text-emerald-600 mt-1">0.00% Open Rate</span>
+        </div>
+
         <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between">
           <p class="text-[11px] font-semibold text-slate-500 uppercase">Click</p>
           <p id="kpiClicked" class="text-xl font-bold text-sky-700 mt-1">0</p>
@@ -121,13 +248,51 @@
           </div>
         </div>
 
-        <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between"><p class="text-[11px] font-semibold text-slate-500 uppercase">Bounced</p><p id="kpiBounced" class="text-xl font-bold text-rose-600 mt-1">0</p><span id="kpiBounceRate" class="text-[10px] text-slate-400 mt-1">0.00% bounce</span></div>
-        <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between"><p class="text-[11px] font-semibold text-slate-500 uppercase">Unsub / Block</p><p id="kpiUnsub" class="text-xl font-bold text-purple-700 mt-1">0</p><span class="text-[10px] text-slate-400 mt-1">Total opt-outs</span></div>
-        <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between"><p class="text-[11px] font-semibold text-slate-500 uppercase">Registration</p><p id="kpiSignups" class="text-xl font-bold text-amber-600 mt-1">0</p><div class="flex items-center gap-1 mt-1 text-[10px]"><span id="cardKpiSignupsSub" class="font-bold text-slate-900">KPI: 0</span><span class="text-slate-300">•</span><span id="cardRrSignupsSub" class="font-bold">RR: 0</span></div></div>
-        <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between"><p class="text-[11px] font-semibold text-slate-500 uppercase">Users</p><p id="kpiUsers" class="text-xl font-bold text-indigo-600 mt-1">0</p><div class="flex items-center gap-1 mt-1 text-[10px]"><span id="cardKpiUsersSub" class="font-bold text-slate-900">KPI: 0</span><span class="text-slate-300">•</span><span id="cardRrUsersSub" class="font-bold">RR: 0</span></div></div>
-        <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between"><p class="text-[11px] font-semibold text-slate-500 uppercase">Revenue</p><p id="kpiRevenue" class="text-xl font-bold text-emerald-600 mt-1">$0</p><div class="flex items-center gap-1 mt-1 text-[10px]"><span id="cardKpiRevenueSub" class="font-bold text-slate-900">KPI: $0</span><span class="text-slate-300">•</span><span id="cardRrRevenueSub" class="font-bold">RR: $0</span></div></div>
-        <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between"><p class="text-[11px] font-semibold text-slate-500 uppercase">Budget</p><p id="kpiBudget" class="text-xl font-bold text-slate-900 mt-1">$0</p><div class="flex items-center gap-1 mt-1 text-[10px]"><span id="cardKpiBudgetSub" class="font-bold text-slate-900">KPI: $0</span><span class="text-slate-300">•</span><span id="cardRrBudgetSub" class="font-bold">RR: $0</span></div></div>
-        <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between"><p class="text-[11px] font-semibold text-slate-500 uppercase">Profit</p><p id="kpiProfit" class="text-xl font-bold text-emerald-600 mt-1">$0</p><div class="flex items-center gap-1 mt-1 text-[10px]"><span id="cardKpiProfitSub" class="font-bold text-slate-900">KPI: $0</span><span class="text-slate-300">•</span><span id="cardRrProfitSub" class="font-bold">RR: $0</span></div></div>
+        <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between">
+          <p class="text-[11px] font-semibold text-slate-500 uppercase">Bounced</p>
+          <p id="kpiBounced" class="text-xl font-bold text-rose-600 mt-1">0</p><span id="kpiBounceRate"
+            class="text-[10px] text-slate-400 mt-1">0.00% bounce</span>
+        </div>
+        <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between">
+          <p class="text-[11px] font-semibold text-slate-500 uppercase">Unsub / Block</p>
+          <p id="kpiUnsub" class="text-xl font-bold text-purple-700 mt-1">0</p><span
+            class="text-[10px] text-slate-400 mt-1">Total opt-outs</span>
+        </div>
+        <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between">
+          <p class="text-[11px] font-semibold text-slate-500 uppercase">Registration</p>
+          <p id="kpiSignups" class="text-xl font-bold text-amber-600 mt-1">0</p>
+          <div class="flex items-center gap-1 mt-1 text-[10px]"><span id="cardKpiSignupsSub"
+              class="font-bold text-slate-900">KPI: 0</span><span class="text-slate-300">•</span><span
+              id="cardRrSignupsSub" class="font-bold">RR: 0</span></div>
+        </div>
+        <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between">
+          <p class="text-[11px] font-semibold text-slate-500 uppercase">Users</p>
+          <p id="kpiUsers" class="text-xl font-bold text-indigo-600 mt-1">0</p>
+          <div class="flex items-center gap-1 mt-1 text-[10px]"><span id="cardKpiUsersSub"
+              class="font-bold text-slate-900">KPI: 0</span><span class="text-slate-300">•</span><span
+              id="cardRrUsersSub" class="font-bold">RR: 0</span></div>
+        </div>
+        <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between">
+          <p class="text-[11px] font-semibold text-slate-500 uppercase">Revenue</p>
+          <p id="kpiRevenue" class="text-xl font-bold text-emerald-600 mt-1">$0</p>
+          <div class="flex items-center gap-1 mt-1 text-[10px]"><span id="cardKpiRevenueSub"
+              class="font-bold text-slate-900">KPI: $0</span><span class="text-slate-300">•</span><span
+              id="cardRrRevenueSub" class="font-bold">RR: $0</span></div>
+        </div>
+        <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between">
+          <p class="text-[11px] font-semibold text-slate-500 uppercase">Budget</p>
+          <p id="kpiBudget" class="text-xl font-bold text-slate-900 mt-1">$0</p>
+          <div class="flex items-center gap-1 mt-1 text-[10px]"><span id="cardKpiBudgetSub"
+              class="font-bold text-slate-900">KPI: $0</span><span class="text-slate-300">•</span><span
+              id="cardRrBudgetSub" class="font-bold">RR: $0</span></div>
+        </div>
+        <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between">
+          <p class="text-[11px] font-semibold text-slate-500 uppercase">Profit</p>
+          <p id="kpiProfit" class="text-xl font-bold text-emerald-600 mt-1">$0</p>
+          <div class="flex items-center gap-1 mt-1 text-[10px]"><span id="cardKpiProfitSub"
+              class="font-bold text-slate-900">KPI: $0</span><span class="text-slate-300">•</span><span
+              id="cardRrProfitSub" class="font-bold">RR: $0</span></div>
+        </div>
       </section>
 
       <!-- ESP TABLE -->
@@ -135,8 +300,11 @@
         <div class="px-6 py-3.5 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
           <div class="flex items-center gap-3">
             <h3 class="text-sm font-bold text-slate-800 uppercase tracking-wider">Email Performance by ESP</h3>
-            <button id="toggleTableBtn" onclick="toggleTableDetails()" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold bg-[#485c44] hover:bg-[#3b4c37] text-white shadow-sm cursor-pointer">
-              <svg id="btnIcon" class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+            <button id="toggleTableBtn" onclick="toggleTableDetails()"
+              class="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold bg-[#485c44] hover:bg-[#3b4c37] text-white shadow-sm cursor-pointer">
+              <svg id="btnIcon" class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+              </svg>
               <span id="btnText">Show All</span>
             </button>
           </div>
@@ -145,7 +313,17 @@
         <div class="overflow-x-auto">
           <table class="w-full text-sm text-right esp-table">
             <thead>
-              <tr><th class="py-3 px-4 text-left font-bold text-xs uppercase">ESP ▲</th><th class="py-3 px-4">VOLUME</th><th class="py-3 px-4">Delivered</th><th class="py-3 px-4">Soft Bounce</th><th class="py-3 px-4">Hard Bounce</th><th class="py-3 px-4">Opened</th><th class="py-3 px-4">Clicks</th><th class="py-3 px-4">SIGNUPS</th><th class="py-3 px-4">PLAYERS</th></tr>
+              <tr>
+                <th class="py-3 px-4 text-left font-bold text-xs uppercase">ESP ▲</th>
+                <th class="py-3 px-4">VOLUME</th>
+                <th class="py-3 px-4">Delivered</th>
+                <th class="py-3 px-4">Soft Bounce</th>
+                <th class="py-3 px-4">Hard Bounce</th>
+                <th class="py-3 px-4">Opened</th>
+                <th class="py-3 px-4">Clicks</th>
+                <th class="py-3 px-4">SIGNUPS</th>
+                <th class="py-3 px-4">PLAYERS</th>
+              </tr>
             </thead>
             <tbody id="espTableBody" class="text-slate-700"></tbody>
             <tfoot id="espTableFoot"></tfoot>
@@ -159,19 +337,27 @@
           <div>
             <div class="flex items-center gap-3">
               <h3 class="text-sm font-bold text-slate-800 uppercase tracking-wider">ESP / IP Breakdown</h3>
-              <button id="toggleEspIpBtn" onclick="toggleEspIpBreakdownDetails()" type="button" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold bg-[#1e293b] hover:bg-slate-700 text-white shadow-sm cursor-pointer transition-colors">
-                <svg id="espIpBtnIcon" class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+              <button id="toggleEspIpBtn" onclick="toggleEspIpBreakdownDetails()" type="button"
+                class="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold bg-[#1e293b] hover:bg-slate-700 text-white shadow-sm cursor-pointer transition-colors">
+                <svg id="espIpBtnIcon" class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                </svg>
                 <span id="espIpBtnText">Show All</span>
               </button>
             </div>
-            <p class="text-xs text-slate-500 mt-0.5">Sign Ups & FTDs distribution by ESP / IP, Advertisers and Brands</p>
+            <p class="text-xs text-slate-500 mt-0.5">Sign Ups & FTDs distribution by ESP / IP, Advertisers and Brands
+            </p>
           </div>
         </div>
         <div class="overflow-x-auto">
           <table id="espIpBreakdownTable" class="w-full text-sm excel-table">
             <thead>
               <tr class="theme-header-aff text-white text-xs uppercase tracking-wider font-semibold">
-                <th class="py-2.5 px-4 text-left">ESP / IP</th><th class="py-2.5 px-4 text-left">Advertisers</th><th class="py-2.5 px-4 text-left">Brands</th><th class="py-2.5 px-4 text-right">Sign Ups</th><th class="py-2.5 px-4 text-right">FTDs</th>
+                <th class="py-2.5 px-4 text-left">ESP / IP</th>
+                <th class="py-2.5 px-4 text-left">Advertisers</th>
+                <th class="py-2.5 px-4 text-left">Brands</th>
+                <th class="py-2.5 px-4 text-right">Sign Ups</th>
+                <th class="py-2.5 px-4 text-right">FTDs</th>
               </tr>
             </thead>
             <tbody id="espIpBreakdownTableBody" class="text-slate-700"></tbody>
@@ -188,17 +374,55 @@
 
       <!-- CHARTS SECTION 1 -->
       <div class="space-y-6">
-        <h3 class="text-sm font-bold text-slate-700 uppercase tracking-wider">1. ESP Deliverability & Engagement Charts</h3>
+        <h3 class="text-sm font-bold text-slate-700 uppercase tracking-wider">1. ESP Deliverability & Engagement Charts
+        </h3>
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 h-72 flex flex-col justify-between"><div><h4 class="text-xs font-bold text-slate-900 uppercase">Delivered vs. Open</h4><p class="text-[11px] text-slate-500 mb-2">Volume comparison by ESP</p></div><div class="relative h-52"><canvas id="chartEspVolumen"></canvas></div></div>
-          <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 h-72 flex flex-col justify-between"><div><h4 class="text-xs font-bold text-slate-900 uppercase">Clicks by ESP</h4><p class="text-[11px] text-slate-500 mb-2">Exact click counts</p></div><div class="relative h-52"><canvas id="chartEspClicks"></canvas></div></div>
-          <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 h-72 flex flex-col justify-between"><div><h4 class="text-xs font-bold text-slate-900 uppercase">Open Rate (%) by ESP</h4><p class="text-[11px] text-slate-500 mb-2">Open efficiency per IP</p></div><div class="relative h-52"><canvas id="chartEspOpenRate"></canvas></div></div>
+          <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 h-72 flex flex-col justify-between">
+            <div>
+              <h4 class="text-xs font-bold text-slate-900 uppercase">Delivered vs. Open</h4>
+              <p class="text-[11px] text-slate-500 mb-2">Volume comparison by ESP</p>
+            </div>
+            <div class="relative h-52"><canvas id="chartEspVolumen"></canvas></div>
+          </div>
+          <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 h-72 flex flex-col justify-between">
+            <div>
+              <h4 class="text-xs font-bold text-slate-900 uppercase">Clicks by ESP</h4>
+              <p class="text-[11px] text-slate-500 mb-2">Exact click counts</p>
+            </div>
+            <div class="relative h-52"><canvas id="chartEspClicks"></canvas></div>
+          </div>
+          <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 h-72 flex flex-col justify-between">
+            <div>
+              <h4 class="text-xs font-bold text-slate-900 uppercase">Open Rate (%) by ESP</h4>
+              <p class="text-[11px] text-slate-500 mb-2">Open efficiency per IP</p>
+            </div>
+            <div class="relative h-52"><canvas id="chartEspOpenRate"></canvas></div>
+          </div>
         </div>
-        <h3 class="text-sm font-bold text-slate-700 uppercase tracking-wider pt-2">2. Mailbox Domain Deliverability Charts</h3>
+        <h3 class="text-sm font-bold text-slate-700 uppercase tracking-wider pt-2">2. Mailbox Domain Deliverability
+          Charts</h3>
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 h-72 flex flex-col justify-between"><div><h4 class="text-xs font-bold text-slate-900 uppercase">Delivered by Domain</h4><p class="text-[11px] text-slate-500 mb-2">Total volume sent per domain</p></div><div class="relative h-52"><canvas id="chartDomainDelivered"></canvas></div></div>
-          <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 h-72 flex flex-col justify-between"><div><h4 class="text-xs font-bold text-slate-900 uppercase">Open Rate (%) by Domain</h4><p class="text-[11px] text-slate-500 mb-2">Open rate by domain</p></div><div class="relative h-52"><canvas id="chartDomainOpenRate"></canvas></div></div>
-          <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 h-72 flex flex-col justify-between"><div><h4 class="text-xs font-bold text-slate-900 uppercase">Clicks by Domain</h4><p class="text-[11px] text-slate-500 mb-2">Clicks generated per domain</p></div><div class="relative h-52"><canvas id="chartDomainClicks"></canvas></div></div>
+          <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 h-72 flex flex-col justify-between">
+            <div>
+              <h4 class="text-xs font-bold text-slate-900 uppercase">Delivered by Domain</h4>
+              <p class="text-[11px] text-slate-500 mb-2">Total volume sent per domain</p>
+            </div>
+            <div class="relative h-52"><canvas id="chartDomainDelivered"></canvas></div>
+          </div>
+          <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 h-72 flex flex-col justify-between">
+            <div>
+              <h4 class="text-xs font-bold text-slate-900 uppercase">Open Rate (%) by Domain</h4>
+              <p class="text-[11px] text-slate-500 mb-2">Open rate by domain</p>
+            </div>
+            <div class="relative h-52"><canvas id="chartDomainOpenRate"></canvas></div>
+          </div>
+          <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 h-72 flex flex-col justify-between">
+            <div>
+              <h4 class="text-xs font-bold text-slate-900 uppercase">Clicks by Domain</h4>
+              <p class="text-[11px] text-slate-500 mb-2">Clicks generated per domain</p>
+            </div>
+            <div class="relative h-52"><canvas id="chartDomainClicks"></canvas></div>
+          </div>
         </div>
       </div>
     </div>
@@ -206,24 +430,57 @@
     <!-- OPS TEAM SECTION -->
     <div class="space-y-6 pt-2">
       <div class="flex items-center justify-between border-b border-slate-200 pb-2">
-        <div class="flex items-center gap-2"><span class="px-2.5 py-0.5 rounded bg-indigo-800 text-white text-xs font-bold uppercase">Team Ops</span><h2 class="text-lg font-bold text-slate-800">Email Operations Performance</h2></div>
-        <span id="opsPeriodBadge" class="px-3 py-1 rounded-full text-xs font-semibold bg-indigo-50 text-indigo-800 border border-indigo-200">Filtered Period</span>
+        <div class="flex items-center gap-2"><span
+            class="px-2.5 py-0.5 rounded bg-indigo-800 text-white text-xs font-bold uppercase">Team Ops</span>
+          <h2 class="text-lg font-bold text-slate-800">Email Operations Performance</h2>
+        </div>
+        <span id="opsPeriodBadge"
+          class="px-3 py-1 rounded-full text-xs font-semibold bg-indigo-50 text-indigo-800 border border-indigo-200">Filtered
+          Period</span>
       </div>
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
           <h3 class="text-base font-bold text-slate-900 mb-3">Registrations by team</h3>
           <table class="w-full text-sm text-right excel-table">
-            <thead class="theme-header-aff text-white text-xs uppercase font-semibold"><tr><th class="py-2 px-3 text-left">Advertiser</th><th class="py-2 px-3">Andrea ('a')</th><th class="py-2 px-3">Jessie ('j')</th><th class="py-2 px-3">Total</th></tr></thead>
+            <thead class="theme-header-aff text-white text-xs uppercase font-semibold">
+              <tr>
+                <th class="py-2 px-3 text-left">Advertiser</th>
+                <th class="py-2 px-3">Andrea ('a')</th>
+                <th class="py-2 px-3">Jessie ('j')</th>
+                <th class="py-2 px-3">Total</th>
+              </tr>
+            </thead>
             <tbody id="opsSignupsTableBody"></tbody>
-            <tfoot class="border-t-2 border-slate-900 bg-slate-50 font-bold"><tr><td class="py-2 px-3 text-left">Grand Total</td><td id="opsSignupsAndreaTotal" class="font-mono text-amber-600">0</td><td id="opsSignupsJessieTotal" class="font-mono text-amber-600">0</td><td id="opsSignupsGrandTotal" class="font-mono text-amber-700">0</td></tr></tfoot>
+            <tfoot class="border-t-2 border-slate-900 bg-slate-50 font-bold">
+              <tr>
+                <td class="py-2 px-3 text-left">Grand Total</td>
+                <td id="opsSignupsAndreaTotal" class="font-mono text-amber-600">0</td>
+                <td id="opsSignupsJessieTotal" class="font-mono text-amber-600">0</td>
+                <td id="opsSignupsGrandTotal" class="font-mono text-amber-700">0</td>
+              </tr>
+            </tfoot>
           </table>
         </div>
         <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
           <h3 class="text-base font-bold text-slate-900 mb-3">Users / FTD by team</h3>
           <table class="w-full text-sm text-right excel-table">
-            <thead class="theme-header-aff text-white text-xs uppercase font-semibold"><tr><th class="py-2 px-3 text-left">Advertiser</th><th class="py-2 px-3">Andrea ('a')</th><th class="py-2 px-3">Jessie ('j')</th><th class="py-2 px-3">Total</th></tr></thead>
+            <thead class="theme-header-aff text-white text-xs uppercase font-semibold">
+              <tr>
+                <th class="py-2 px-3 text-left">Advertiser</th>
+                <th class="py-2 px-3">Andrea ('a')</th>
+                <th class="py-2 px-3">Jessie ('j')</th>
+                <th class="py-2 px-3">Total</th>
+              </tr>
+            </thead>
             <tbody id="opsUsersTableBody"></tbody>
-            <tfoot class="border-t-2 border-slate-900 bg-slate-50 font-bold"><tr><td class="py-2 px-3 text-left">Grand Total</td><td id="opsUsersAndreaTotal" class="font-mono text-indigo-600">0</td><td id="opsUsersJessieTotal" class="font-mono text-indigo-600">0</td><td id="opsUsersGrandTotal" class="font-mono text-indigo-700">0</td></tr></tfoot>
+            <tfoot class="border-t-2 border-slate-900 bg-slate-50 font-bold">
+              <tr>
+                <td class="py-2 px-3 text-left">Grand Total</td>
+                <td id="opsUsersAndreaTotal" class="font-mono text-indigo-600">0</td>
+                <td id="opsUsersJessieTotal" class="font-mono text-indigo-600">0</td>
+                <td id="opsUsersGrandTotal" class="font-mono text-indigo-700">0</td>
+              </tr>
+            </tfoot>
           </table>
         </div>
       </div>
@@ -231,31 +488,57 @@
 
     <!-- SECTION 2: ADVERTISER & BRAND -->
     <div class="space-y-6 pt-4">
-      <div class="flex items-center gap-2 border-b border-slate-200 pb-2"><span class="px-2.5 py-0.5 rounded bg-slate-900 text-white text-xs font-bold uppercase">Section 2</span><h2 class="text-lg font-bold text-slate-800">Advertiser Performance & Revenue</h2></div>
-      
+      <div class="flex items-center gap-2 border-b border-slate-200 pb-2"><span
+          class="px-2.5 py-0.5 rounded bg-slate-900 text-white text-xs font-bold uppercase">Section 2</span>
+        <h2 class="text-lg font-bold text-slate-800">Advertiser Performance & Revenue</h2>
+      </div>
+
       <!-- ADVERTISER TABLE -->
       <section class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
         <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
-          <div><h3 class="text-sm font-bold text-slate-800 uppercase">Advertiser Breakdown Table</h3><p class="text-xs text-slate-500">Metrics: Conversion S2P Ratio (1:X) & Revenue</p></div>
-          <button onclick="resetTable('advertiserTable')" class="px-3 py-1.5 rounded-lg text-xs font-semibold border border-slate-300 bg-white hover:bg-slate-50 cursor-pointer">Clear / Reset Table</button>
+          <div>
+            <h3 class="text-sm font-bold text-slate-800 uppercase">Advertiser Breakdown Table</h3>
+            <p class="text-xs text-slate-500">Metrics: Conversion S2P Ratio (1:X) & Revenue</p>
+          </div>
+          <button onclick="resetTable('advertiserTable')"
+            class="px-3 py-1.5 rounded-lg text-xs font-semibold border border-slate-300 bg-white hover:bg-slate-50 cursor-pointer">Clear
+            / Reset Table</button>
         </div>
         <div class="overflow-x-auto">
           <table id="advertiserTable" class="w-full text-sm text-right excel-table">
             <thead>
               <tr class="sort-row">
                 <th class="w-1/4"></th>
-                <th><button onclick="sortTable('advertiserTable', 1, this, 'num')" class="sort-btn px-2 py-1 border rounded text-[11px]">Sort <span class="sort-icon">⇅</span></button></th>
-                <th><button onclick="sortTable('advertiserTable', 2, this, 'num')" class="sort-btn px-2 py-1 border rounded text-[11px]">Sort <span class="sort-icon">⇅</span></button></th>
-                <th><button onclick="sortTable('advertiserTable', 3, this, 'currency')" class="sort-btn px-2 py-1 border rounded text-[11px]">Sort <span class="sort-icon">⇅</span></button></th>
-                <th><button onclick="sortTable('advertiserTable', 4, this, 'ratio')" class="sort-btn px-2 py-1 border rounded text-[11px]">Sort <span class="sort-icon">⇅</span></button></th>
+                <th><button onclick="sortTable('advertiserTable', 1, this, 'num')"
+                    class="sort-btn px-2 py-1 border rounded text-[11px]">Sort <span class="sort-icon">⇅</span></button>
+                </th>
+                <th><button onclick="sortTable('advertiserTable', 2, this, 'num')"
+                    class="sort-btn px-2 py-1 border rounded text-[11px]">Sort <span class="sort-icon">⇅</span></button>
+                </th>
+                <th><button onclick="sortTable('advertiserTable', 3, this, 'currency')"
+                    class="sort-btn px-2 py-1 border rounded text-[11px]">Sort <span class="sort-icon">⇅</span></button>
+                </th>
+                <th><button onclick="sortTable('advertiserTable', 4, this, 'ratio')"
+                    class="sort-btn px-2 py-1 border rounded text-[11px]">Sort <span class="sort-icon">⇅</span></button>
+                </th>
               </tr>
               <tr class="theme-header-aff text-white text-xs uppercase font-semibold">
-                <th class="py-2.5 px-4 text-left">Advertiser</th><th class="py-2.5 px-4">Sign Ups</th><th class="py-2.5 px-4">Users</th><th class="py-2.5 px-4">Revenue</th><th class="py-2.5 px-4">S2P (Ratio)</th>
+                <th class="py-2.5 px-4 text-left">Advertiser</th>
+                <th class="py-2.5 px-4">Sign Ups</th>
+                <th class="py-2.5 px-4">Users</th>
+                <th class="py-2.5 px-4">Revenue</th>
+                <th class="py-2.5 px-4">S2P (Ratio)</th>
               </tr>
             </thead>
             <tbody id="advertiserTableBody"></tbody>
             <tfoot class="border-t-2 border-slate-900 bg-slate-50 font-bold">
-              <tr><td colspan="1" class="py-2.5 px-4 text-left">Grand total</td><td id="advGrandSignups" class="font-mono text-amber-600">0</td><td id="advGrandUsers" class="font-mono text-indigo-600">0</td><td id="advGrandRevenue" class="font-mono text-emerald-600">$0</td><td id="advGrandS2p" class="font-mono text-emerald-600">0:0</td></tr>
+              <tr>
+                <td colspan="1" class="py-2.5 px-4 text-left">Grand total</td>
+                <td id="advGrandSignups" class="font-mono text-amber-600">0</td>
+                <td id="advGrandUsers" class="font-mono text-indigo-600">0</td>
+                <td id="advGrandRevenue" class="font-mono text-emerald-600">$0</td>
+                <td id="advGrandS2p" class="font-mono text-emerald-600">0:0</td>
+              </tr>
             </tfoot>
           </table>
         </div>
@@ -264,26 +547,51 @@
       <!-- BRAND TABLE -->
       <section class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
         <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
-          <div><h3 class="text-sm font-bold text-slate-800 uppercase">Brand Breakdown Table</h3><p class="text-xs text-slate-500">Performance by Brand & Conversion S2P Ratio</p></div>
-          <button onclick="resetTable('brandTable')" class="px-3 py-1.5 rounded-lg text-xs font-semibold border border-slate-300 bg-white hover:bg-slate-50 cursor-pointer">Clear / Reset Table</button>
+          <div>
+            <h3 class="text-sm font-bold text-slate-800 uppercase">Brand Breakdown Table</h3>
+            <p class="text-xs text-slate-500">Performance by Brand & Conversion S2P Ratio</p>
+          </div>
+          <button onclick="resetTable('brandTable')"
+            class="px-3 py-1.5 rounded-lg text-xs font-semibold border border-slate-300 bg-white hover:bg-slate-50 cursor-pointer">Clear
+            / Reset Table</button>
         </div>
         <div class="overflow-x-auto">
           <table id="brandTable" class="w-full text-sm text-right excel-table">
             <thead>
               <tr class="sort-row">
-                <th class="w-1/4"></th><th></th>
-                <th><button onclick="sortTable('brandTable', 2, this, 'num')" class="sort-btn px-2 py-1 border rounded text-[11px]">Sort <span class="sort-icon">⇅</span></button></th>
-                <th><button onclick="sortTable('brandTable', 3, this, 'num')" class="sort-btn px-2 py-1 border rounded text-[11px]">Sort <span class="sort-icon">⇅</span></button></th>
-                <th><button onclick="sortTable('brandTable', 4, this, 'currency')" class="sort-btn px-2 py-1 border rounded text-[11px]">Sort <span class="sort-icon">⇅</span></button></th>
-                <th><button onclick="sortTable('brandTable', 5, this, 'ratio')" class="sort-btn px-2 py-1 border rounded text-[11px]">Sort <span class="sort-icon">⇅</span></button></th>
+                <th class="w-1/4"></th>
+                <th></th>
+                <th><button onclick="sortTable('brandTable', 2, this, 'num')"
+                    class="sort-btn px-2 py-1 border rounded text-[11px]">Sort <span class="sort-icon">⇅</span></button>
+                </th>
+                <th><button onclick="sortTable('brandTable', 3, this, 'num')"
+                    class="sort-btn px-2 py-1 border rounded text-[11px]">Sort <span class="sort-icon">⇅</span></button>
+                </th>
+                <th><button onclick="sortTable('brandTable', 4, this, 'currency')"
+                    class="sort-btn px-2 py-1 border rounded text-[11px]">Sort <span class="sort-icon">⇅</span></button>
+                </th>
+                <th><button onclick="sortTable('brandTable', 5, this, 'ratio')"
+                    class="sort-btn px-2 py-1 border rounded text-[11px]">Sort <span class="sort-icon">⇅</span></button>
+                </th>
               </tr>
               <tr class="theme-header-aff text-white text-xs uppercase font-semibold">
-                <th class="py-2.5 px-4 text-left">Brand</th><th class="py-2.5 px-4 text-left">Advertiser</th><th class="py-2.5 px-4">Signups</th><th class="py-2.5 px-4">FTD / Users</th><th class="py-2.5 px-4">Revenue</th><th class="py-2.5 px-4">S2P (Ratio)</th>
+                <th class="py-2.5 px-4 text-left">Brand</th>
+                <th class="py-2.5 px-4 text-left">Advertiser</th>
+                <th class="py-2.5 px-4">Signups</th>
+                <th class="py-2.5 px-4">FTD / Users</th>
+                <th class="py-2.5 px-4">Revenue</th>
+                <th class="py-2.5 px-4">S2P (Ratio)</th>
               </tr>
             </thead>
             <tbody id="brandTableBody"></tbody>
             <tfoot class="border-t-2 border-slate-900 bg-slate-50 font-bold">
-              <tr><td colspan="2" class="py-2.5 px-4 text-left">Grand total</td><td id="brandGrandSignups" class="font-mono text-amber-600">0</td><td id="brandGrandUsers" class="font-mono text-indigo-600">0</td><td id="brandGrandRevenue" class="font-mono text-emerald-600">$0</td><td id="brandGrandS2p" class="font-mono text-emerald-600">0:0</td></tr>
+              <tr>
+                <td colspan="2" class="py-2.5 px-4 text-left">Grand total</td>
+                <td id="brandGrandSignups" class="font-mono text-amber-600">0</td>
+                <td id="brandGrandUsers" class="font-mono text-indigo-600">0</td>
+                <td id="brandGrandRevenue" class="font-mono text-emerald-600">$0</td>
+                <td id="brandGrandS2p" class="font-mono text-emerald-600">0:0</td>
+              </tr>
             </tfoot>
           </table>
         </div>
@@ -294,7 +602,7 @@
   <script>
     const $ = id => document.getElementById(id);
     const setT = (id, val) => { const el = $(id); if (el) el.textContent = val; };
-    const MONTH_KEYS = ['january','february','march','april','may','june','july','august','september','october','november','december'];
+    const MONTH_KEYS = ['january', 'february', 'march', 'april', 'may', 'june', 'july', 'august', 'september', 'october', 'november', 'december'];
     const MONTH_NAMES = MONTH_KEYS.map(m => m.toUpperCase());
 
     let globalLoadedMonths = [], areDetailsExpanded = false, chartRefs = {};
@@ -314,11 +622,11 @@
 
     const getCurrentYear = () => new Date().getFullYear();
 
-    const getTodayIso = () => { 
-      const d = new Date(); 
-      return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; 
+    const getTodayIso = () => {
+      const d = new Date();
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
     };
-    
+
     const _initToday = getTodayIso();
     let currentStartDate = _initToday.substring(0, 8) + '01';
     let currentEndDate = _initToday;
@@ -326,13 +634,13 @@
     let calViewYear = new Date().getFullYear();
     let calViewMonth = new Date().getMonth();
 
-    const formatS2P = (s, u) => u > 0 ? (s === 0 ? '0:1' : `1:${Math.round(s/u)}`) : (s > 0 ? `0:${s}` : '0:0');
+    const formatS2P = (s, u) => u > 0 ? (s === 0 ? '0:1' : `1:${Math.round(s / u)}`) : (s > 0 ? `0:${s}` : '0:0');
     const isoToDisplay = s => s ? `${s.split('-')[1]}/${s.split('-')[2]}/${s.split('-')[0]}` : '';
 
     async function fetchMonthFile(mKey, year = getCurrentYear()) {
       const capKey = mKey.charAt(0).toUpperCase() + mKey.slice(1);
       const ts = Date.now();
-      
+
       const candidatePaths = [
         `${year}/data_${mKey}.json?t=${ts}`,
         `./${year}/data_${mKey}.json?t=${ts}`,
@@ -354,7 +662,7 @@
             const d = await r.json();
             if (d && (d.daily_records || d.summary_mtd)) return d;
           }
-        } catch(e) {}
+        } catch (e) { }
       }
       return null;
     }
@@ -442,13 +750,13 @@
       const todayIso = getTodayIso();
       const first = new Date(calViewYear, calViewMonth, 1), days = new Date(calViewYear, calViewMonth + 1, 0).getDate();
       const offset = (first.getDay() + 6) % 7;
-      
+
       for (let i = 0; i < offset; i++) grid.appendChild(document.createElement('div'));
-      
+
       for (let day = 1; day <= days; day++) {
-        const iso = `${calViewYear}-${String(calViewMonth + 1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+        const iso = `${calViewYear}-${String(calViewMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
         const btn = document.createElement('button'); btn.type = 'button'; btn.textContent = day;
-        
+
         if (iso < MIN_ALLOWED_DATE || iso > todayIso) {
           btn.className = 'p-1.5 text-slate-300 font-bold rounded-xl cursor-not-allowed';
         } else {
@@ -481,7 +789,7 @@
     });
 
     const parseNum = v => parseFloat(String(v || 0).replace(/["', ]/g, '')) || 0;
-    
+
     function parseCsvLine(line) {
       const res = [];
       let cur = '', inQuotes = false;
@@ -500,30 +808,29 @@
       return res.map(s => s.replace(/^"|"$/g, '').trim());
     }
 
-    // El CSV lee las métricas técnicas de entregabilidad
     function parseDailyCsv(txt) {
       if (!txt || typeof txt !== 'string') return null;
       const lines = txt.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
       const map = {};
       let curEsp = '', curIp = '';
-      
+
       for (const line of lines) {
         const lower = line.toLowerCase();
         if (lower.startsWith('date,') || lower.startsWith('esp,') || lower.startsWith('"date",') || lower.includes('grand total')) continue;
-        
+
         const c = parseCsvLine(line);
         if (!c.length) continue;
 
         if (c[0]?.toUpperCase().startsWith('IP')) { curIp = c[0]; continue; }
         if (c[0]) { curEsp = c[0]; curIp = ''; continue; }
-        
+
         const domName = c[1];
         if (!c[0] && domName && domName.toUpperCase() !== 'DOMAIN' && domName.toUpperCase() !== 'TOTAL') {
           const full = curIp ? `${curEsp} ${curIp}`.trim() : curEsp.trim();
           if (!full || isExcludedEsp(full)) continue;
 
           if (!map[full]) map[full] = { esp: full, delivered: 0, softBounce: 0, hardBounce: 0, bounced: 0, opened: 0, clicked: 0, unsub: 0, signups: 0, players: 0, domains: {} };
-          
+
           const d = parseNum(c[2]);
           const sb = parseNum(c[3]);
           const hb = parseNum(c[4]);
@@ -532,23 +839,11 @@
           const un = parseNum(c[11]);
 
           const item = map[full];
-          item.delivered += d; 
-          item.softBounce += sb; 
-          item.hardBounce += hb; 
-          item.bounced += (sb + hb); 
-          item.opened += o; 
-          item.clicked += cl; 
-          item.unsub += un;
-          
+          item.delivered += d; item.softBounce += sb; item.hardBounce += hb; item.bounced += (sb + hb); item.opened += o; item.clicked += cl; item.unsub += un;
+
           if (!item.domains[domName]) item.domains[domName] = { delivered: 0, softBounce: 0, hardBounce: 0, bounced: 0, opened: 0, clicked: 0, unsub: 0, signups: 0, players: 0 };
           const dom = item.domains[domName];
-          dom.delivered += d; 
-          dom.softBounce += sb; 
-          dom.hardBounce += hb; 
-          dom.bounced += (sb + hb); 
-          dom.opened += o; 
-          dom.clicked += cl; 
-          dom.unsub += un;
+          dom.delivered += d; dom.softBounce += sb; dom.hardBounce += hb; dom.bounced += (sb + hb); dom.opened += o; dom.clicked += cl; dom.unsub += un;
         }
       }
       return Object.keys(map).length > 0 ? map : null;
@@ -557,11 +852,11 @@
     async function fetchCsvDay(m, d, y = getCurrentYear()) {
       const k = `${y}/${m}/${d}`;
       if (csvCache[k]) return csvCache[k];
-      
+
       const capM = m.charAt(0).toUpperCase() + m.slice(1);
       const dNum = String(parseInt(d, 10));
       const ts = Date.now();
-      
+
       const candidatePaths = [
         `${y}/maildata/maildata_${m}/${d}.csv`,
         `./${y}/maildata/maildata_${m}/${d}.csv`,
@@ -612,7 +907,7 @@
               }
             }
           }
-        } catch(e) {}
+        } catch (e) { }
       }
       return null;
     }
@@ -620,20 +915,20 @@
     async function aggregateCsvForRange(s, e) {
       const [sy, sm, sd] = s.split('-').map(Number);
       const [ey, em, ed] = e.split('-').map(Number);
-      
+
       const cur = new Date(sy, sm - 1, sd, 12, 0, 0);
       const end = new Date(ey, em - 1, ed, 12, 0, 0);
       const dates = [];
-      
+
       while (cur <= end) {
-        dates.push({ 
+        dates.push({
           y: cur.getFullYear(),
-          m: MONTH_KEYS[cur.getMonth()], 
-          d: String(cur.getDate()).padStart(2, '0') 
+          m: MONTH_KEYS[cur.getMonth()],
+          d: String(cur.getDate()).padStart(2, '0')
         });
         cur.setDate(cur.getDate() + 1);
       }
-      
+
       const days = await Promise.all(dates.map(x => fetchCsvDay(x.m, x.d, x.y)));
       const validDays = days.filter(Boolean);
       const loadedCount = validDays.length;
@@ -648,11 +943,11 @@
       validDays.forEach(m => Object.entries(m).forEach(([esp, v]) => {
         if (!merged[esp]) merged[esp] = { ...v, domains: {} };
         else {
-          ['delivered','softBounce','hardBounce','bounced','opened','clicked','unsub'].forEach(k => merged[esp][k] += (v[k] || 0));
+          ['delivered', 'softBounce', 'hardBounce', 'bounced', 'opened', 'clicked', 'unsub'].forEach(k => merged[esp][k] += v[k]);
         }
         Object.entries(v.domains).forEach(([dom, dv]) => {
           if (!merged[esp].domains[dom]) merged[esp].domains[dom] = { ...dv };
-          else ['delivered','softBounce','hardBounce','bounced','opened','clicked','unsub'].forEach(k => merged[esp].domains[dom][k] += (dv[k] || 0));
+          else['delivered', 'softBounce', 'hardBounce', 'bounced', 'opened', 'clicked', 'unsub'].forEach(k => merged[esp].domains[dom][k] += dv[k]);
         });
       }));
       return merged;
@@ -668,7 +963,7 @@
 
       const months = globalLoadedMonths.filter(m => (m.daily_records || []).some(r => r.date >= s && r.date <= e));
       months.forEach(m => {
-        if (m.kpis) { ['budget','signups','users','revenue','profit'].forEach(k => agg.kpi[k] += (m.kpis[k] || 0)); }
+        if (m.kpis) { ['budget', 'signups', 'users', 'revenue', 'profit'].forEach(k => agg.kpi[k] += (m.kpis[k] || 0)); }
         agg.totalMonthDays += (m.total_days_in_month || 0);
       });
 
@@ -697,32 +992,32 @@
         const hasDailyBreakdown = dailyInRange.some(r => Array.isArray(r.esp_ip_breakdown) && r.esp_ip_breakdown.length > 0);
 
         dailyInRange.forEach(r => {
-          agg.daysElapsedInRange++; 
-          agg.budget += r.budget || 0; 
-          agg.signups += r.signups || 0; 
-          agg.users += r.users || 0; 
+          agg.daysElapsedInRange++;
+          agg.budget += r.budget || 0;
+          agg.signups += r.signups || 0;
+          agg.users += r.users || 0;
           agg.revenue += r.revenue || 0;
 
           Object.entries(r.advertisers || {}).forEach(([adv, v]) => {
             if (!agg.advertisers[adv]) agg.advertisers[adv] = { signups: 0, users: 0, revenue: 0 };
-            agg.advertisers[adv].signups += v.signups || 0; 
-            agg.advertisers[adv].users += v.users || 0; 
+            agg.advertisers[adv].signups += v.signups || 0;
+            agg.advertisers[adv].users += v.users || 0;
             agg.advertisers[adv].revenue += v.revenue || 0;
           });
 
           Object.entries(r.brands || {}).forEach(([br, v]) => {
             if (!agg.brands[br]) agg.brands[br] = { advertiser: v.advertiser || '-', signups: 0, users: 0, revenue: 0 };
-            agg.brands[br].signups += v.signups || 0; 
-            agg.brands[br].users += v.users || 0; 
+            agg.brands[br].signups += v.signups || 0;
+            agg.brands[br].users += v.users || 0;
             agg.brands[br].revenue += v.revenue || 0;
           });
 
           if (r.ops) {
-            ['andrea','jessie'].forEach(p => { 
-              if (r.ops[p]) { 
-                agg.ops[p].signups += r.ops[p].signups || 0; 
-                agg.ops[p].users += r.ops[p].users || 0; 
-              } 
+            ['andrea', 'jessie'].forEach(p => {
+              if (r.ops[p]) {
+                agg.ops[p].signups += r.ops[p].signups || 0;
+                agg.ops[p].users += r.ops[p].users || 0;
+              }
             });
           }
 
@@ -790,8 +1085,8 @@
         ['signups_by_advertiser', 'users_by_advertiser'].forEach(prop => {
           Object.entries(opsMtd[prop] || {}).forEach(([adv, v]) => {
             if (!agg.ops[prop][adv]) agg.ops[prop][adv] = { andrea: 0, jessie: 0, total: 0 };
-            agg.ops[prop][adv].andrea += v.andrea || 0; 
-            agg.ops[prop][adv].jessie += v.jessie || 0; 
+            agg.ops[prop][adv].andrea += v.andrea || 0;
+            agg.ops[prop][adv].jessie += v.jessie || 0;
             agg.ops[prop][adv].total += (v.andrea || 0) + (v.jessie || 0);
           });
         });
@@ -890,9 +1185,16 @@
       const agg = aggregateJsonData(currentStartDate, currentEndDate);
       const csvMap = await aggregateCsvForRange(currentStartDate, currentEndDate);
 
-      const sortOrder = ['MLJ (Mailjet) IP 1', 'MLJ (Mailjet) IP 2', 'MLJ (Mailjet) IP 3 / SH', 'SEG (Sendgrid) IP 1', 'SEG (Sendgrid) IP 2 / SH'];
+      // Lista de ESPs activas reales (que enviaron correos en este rango)
+      const espList = Object.values(csvMap)
+        .filter(e => !isExcludedEsp(e.esp) && ((e.delivered || 0) > 0 || (e.clicked || 0) > 0))
+        .sort((a, b) => (b.clicked * 10 + b.delivered) - (a.clicked * 10 + a.delivered));
 
-      // 1. Mapear las filas crudas existentes en breakdownByEsp (preservando exactamente el origen)
+      const activeEsps = espList.length > 0
+        ? espList.map(e => e.esp)
+        : ['SEG (Sendgrid) IP 2 / SH', 'SEG (Sendgrid) IP 1', 'MLJ (Mailjet) IP 2', 'MLJ (Mailjet) IP 1'];
+
+      // 1. Mapear las filas existentes en breakdownByEsp RESPETANDO EXACTAMENTE sus números originales
       const breakdownByEsp = {};
       (agg.esp_ip_breakdown || []).forEach(r => {
         if (r.is_total || r.is_overall) return;
@@ -918,13 +1220,14 @@
           };
         }
 
+        // Si ya venía con números en el JSON, se respetan tal cual (incluso si la IP tiene 0 en envíos)
         breakdownByEsp[esp][key].signups += sig;
         breakdownByEsp[esp][key].ftds += ftd;
         breakdownByEsp[esp][key].origSig += sig;
         breakdownByEsp[esp][key].origFtd += ftd;
       });
 
-      // 2. Función de distribución por resto mayor (SOLO PARA > 0)
+      // Función de distribución por resto mayor
       const allocateDelta = (items, delta, getWeight, addVal) => {
         if (delta <= 0 || !items || items.length === 0) return;
         const eligible = items.filter(it => (getWeight(it) || 0) > 0);
@@ -943,9 +1246,8 @@
         eligible.forEach((it, idx) => addVal(it, ints[idx]));
       };
 
-      // 3. RECONCILIACIÓN ESTRICTA:
-      // - Si una fila viene en 0, NUNCA se le asigna nada.
-      // - Si la IP tiene Delivered en 0, NUNCA se le asigna más.
+      // 2. RECONCILIACIÓN ESTRICTA: SOLO ASIGNAR DELTAS A LOS QUE ORIGINARIAMENTE SEAN > 0
+      let unassignedRotation = 0;
       Object.entries(agg.brands).forEach(([bName, bData]) => {
         const targetSig = bData.signups || 0;
         const targetFtd = bData.users || 0;
@@ -956,9 +1258,7 @@
         const matching = [];
         Object.entries(breakdownByEsp).forEach(([esp, group]) => {
           Object.values(group).forEach(item => {
-            const bMatch = item.brand.trim().toLowerCase() === bName.trim().toLowerCase();
-            const aMatch = item.advertiser.trim().toLowerCase() === adv.trim().toLowerCase();
-            if (bMatch || aMatch) {
+            if (item.brand.toLowerCase() === bName.toLowerCase()) {
               matching.push(item);
             }
           });
@@ -968,50 +1268,54 @@
           const curSig = matching.reduce((s, it) => s + (it.signups || 0), 0);
           const curFtd = matching.reduce((s, it) => s + (it.ftds || 0), 0);
 
-          // SOLO se asigna si origSig > 0 y si la IP tiene delivered > 0
+          // REGLA: Si falta signups, SOLO se distribuye entre filas con origSig > 0.
+          // A las filas que venían en 0, NO se les asigna nada.
           if (targetSig > curSig) {
-            allocateDelta(
-              matching,
-              targetSig - curSig,
-              it => {
-                const deliv = csvMap[it.esp_ip]?.delivered || 0;
-                return (it.origSig > 0 && deliv > 0) ? it.origSig : 0;
-              },
-              (it, val) => { it.signups += val; }
-            );
+            const deltaSig = targetSig - curSig;
+            const sigEligible = matching.filter(it => (it.origSig || 0) > 0);
+            if (sigEligible.length > 0) {
+              allocateDelta(sigEligible, deltaSig, it => it.origSig, (it, val) => { it.signups += val; });
+            }
           }
 
-          // SOLO se asigna si origFtd > 0 y si la IP tiene delivered > 0
+          // REGLA: Si falta FTDs, SOLO se distribuye entre filas con origFtd > 0.
+          // A las filas que venían en 0, NO se les asigna nada.
           if (targetFtd > curFtd) {
-            allocateDelta(
-              matching,
-              targetFtd - curFtd,
-              it => {
-                const deliv = csvMap[it.esp_ip]?.delivered || 0;
-                return (it.origFtd > 0 && deliv > 0) ? it.origFtd : 0;
-              },
-              (it, val) => { it.ftds += val; }
-            );
+            const deltaFtd = targetFtd - curFtd;
+            const ftdEligible = matching.filter(it => (it.origFtd || 0) > 0);
+            if (ftdEligible.length > 0) {
+              allocateDelta(ftdEligible, deltaFtd, it => it.origFtd, (it, val) => { it.ftds += val; });
+            }
           }
+        } else {
+          // Marcas completas que no estaban en el desglose diario (ej. CardCrush) se asignan a IPs activas
+          const chosenEsp = activeEsps[unassignedRotation % activeEsps.length];
+          unassignedRotation++;
+
+          if (!breakdownByEsp[chosenEsp]) breakdownByEsp[chosenEsp] = {};
+          const key = `${adv}___${bName}`;
+          breakdownByEsp[chosenEsp][key] = {
+            esp_ip: chosenEsp,
+            advertiser: adv,
+            brand: bName,
+            signups: targetSig,
+            ftds: targetFtd,
+            origSig: targetSig,
+            origFtd: targetFtd
+          };
         }
       });
 
-      // 🔒 CANDADO ABSOLUTO:
-      // Si vino originalmente con 0 en signups o FTDs, se asegura que quede estrictamente en 0
-      Object.values(breakdownByEsp).forEach(group => {
-        Object.values(group).forEach(item => {
-          if ((item.origSig || 0) === 0) item.signups = 0;
-          if ((item.origFtd || 0) === 0) item.ftds = 0;
-        });
-      });
-
-      // 4. Reconstruir filas detalladas de la tabla ESP / IP Breakdown
+      // 3. Reconstruir filas detalladas de la tabla ESP / IP Breakdown
+      const sortOrder = ['MLJ (Mailjet) IP 1', 'MLJ (Mailjet) IP 2', 'MLJ (Mailjet) IP 3 / SH', 'SEG (Sendgrid) IP 1', 'SEG (Sendgrid) IP 2 / SH'];
       const allKnownEsps = Array.from(new Set([...sortOrder, ...Object.keys(breakdownByEsp)])).filter(e => !isExcludedEsp(e));
+
       const newBreakdownRows = [];
       let grandSig = 0, grandFtd = 0;
 
       allKnownEsps.forEach(espName => {
         const group = breakdownByEsp[espName] || {};
+        // Mostrar cualquier fila que tenga Signups > 0 o FTDs > 0 (incluyendo IPs con volumen 0 si ya venían con conversiones)
         const items = Object.values(group).filter(it => (it.signups || 0) > 0 || (it.ftds || 0) > 0);
         if (items.length === 0) return;
 
@@ -1051,7 +1355,7 @@
 
       agg.esp_ip_breakdown = newBreakdownRows;
 
-      // 5. Sincronizar la tabla superior de ESP con los subtotales exactos del desglose
+      // 4. Actualizar dinámicamente la tabla superior de ESP con los subtotales reconciliados
       const espTotalsFromBreakdown = {};
       newBreakdownRows.forEach(r => {
         if (r.is_total && !r.is_overall) {
@@ -1062,6 +1366,7 @@
         }
       });
 
+      // Asegurar que todas las ESPs conocidas existan en csvMap para que se muestren en la tabla aunque tengan 0
       sortOrder.forEach(espName => {
         if (!csvMap[espName]) {
           csvMap[espName] = {
@@ -1074,6 +1379,7 @@
       Object.values(csvMap).forEach(item => {
         if (!isExcludedEsp(item.esp)) {
           const bd = espTotalsFromBreakdown[item.esp] || { signups: 0, ftds: 0 };
+          // Respetar exactamente lo que reportó el desglose (no poner en 0 si ya traía conversiones reales)
           item.signups = bd.signups || 0;
           item.players = bd.ftds || 0;
         }
@@ -1086,13 +1392,13 @@
         return (idxA !== -1 ? idxA : 99) - (idxB !== -1 ? idxB : 99);
       });
 
+      // NO ocultar las IPs con 0: mostrar todas las conocidas
       agg.esp = list;
 
-      ['delivered','softBounce','hardBounce','bounced','opened','clicked','unsub'].forEach(k => {
+      ['delivered', 'softBounce', 'hardBounce', 'bounced', 'opened', 'clicked', 'unsub'].forEach(k => {
         agg[k] = agg.esp.reduce((acc, cur) => acc + (cur[k] || 0), 0);
       });
 
-      // El total de la tabla cuadra con el desglose exacto
       agg.espSignups = grandSig;
       agg.espPlayers = grandFtd;
 
@@ -1102,7 +1408,7 @@
     function renderDashboard(agg, s, e) {
       const [sy, sm, sd] = s.split('-').map(Number);
       const [ey, em, ed] = e.split('-').map(Number);
-      
+
       const daysInEndMonth = new Date(ey, em, 0).getDate();
       const totalMonthDays = agg.totalMonthDays > 0 ? agg.totalMonthDays : daysInEndMonth;
 
@@ -1124,7 +1430,7 @@
       setT('teamMtdUsers', agg.users.toLocaleString());
       setT('teamMtdRevenue', `$${Math.round(agg.revenue).toLocaleString()}`);
       setT('teamMtdProfit', `$${Math.round(agg.profit).toLocaleString()}`);
-      
+
       const setRrCell = (id, text, rrVal, kpiVal) => {
         const el = $(id);
         if (!el) return;
@@ -1139,21 +1445,21 @@
       setRrCell('teamRrProfit', `$${rrP.toLocaleString()}`, rrP, Math.round(agg.kpi.profit));
       setT('teamRrRoi', `1:${rrB > 0 ? (rrR / rrB).toFixed(1) : '0.0'}`);
 
-      setT('kpiDelivered', (agg.delivered||0).toLocaleString()); 
-      setT('kpiOpened', (agg.opened||0).toLocaleString());
-      setT('kpiClicked', (agg.clicked||0).toLocaleString()); 
-      setT('kpiBounced', (agg.bounced||0).toLocaleString());
-      setT('kpiUnsub', (agg.unsub||0).toLocaleString()); 
+      setT('kpiDelivered', (agg.delivered || 0).toLocaleString());
+      setT('kpiOpened', (agg.opened || 0).toLocaleString());
+      setT('kpiClicked', (agg.clicked || 0).toLocaleString());
+      setT('kpiBounced', (agg.bounced || 0).toLocaleString());
+      setT('kpiUnsub', (agg.unsub || 0).toLocaleString());
       setT('kpiSignups', agg.signups.toLocaleString());
-      setT('kpiUsers', agg.users.toLocaleString()); 
+      setT('kpiUsers', agg.users.toLocaleString());
       setT('kpiRevenue', `$${Math.round(agg.revenue).toLocaleString()}`);
-      setT('kpiBudget', `$${Math.round(agg.budget).toLocaleString()}`); 
+      setT('kpiBudget', `$${Math.round(agg.budget).toLocaleString()}`);
       setT('kpiProfit', `$${Math.round(agg.profit).toLocaleString()}`);
-      
-      setT('kpiOpenRate', `${agg.delivered > 0 ? ((agg.opened/agg.delivered)*100).toFixed(2) : '0.00'}% Open Rate`);
-      setT('kpiClickRate', `${agg.delivered > 0 ? ((agg.clicked/agg.delivered)*100).toFixed(2) : '0.00'}% Click Rate`);
-      setT('kpiBounceRate', `${agg.delivered > 0 ? ((agg.bounced/agg.delivered)*100).toFixed(2) : '0.00'}% bounce`);
-      
+
+      setT('kpiOpenRate', `${agg.delivered > 0 ? ((agg.opened / agg.delivered) * 100).toFixed(2) : '0.00'}% Open Rate`);
+      setT('kpiClickRate', `${agg.delivered > 0 ? ((agg.clicked / agg.delivered) * 100).toFixed(2) : '0.00'}% Click Rate`);
+      setT('kpiBounceRate', `${agg.delivered > 0 ? ((agg.bounced / agg.delivered) * 100).toFixed(2) : '0.00'}% bounce`);
+
       setT('cardRrClicksSub', `RR: ${rrClicks.toLocaleString()}`);
 
       const setCardRr = (id, text, rrVal, kpiVal) => {
@@ -1169,14 +1475,14 @@
       setT('cardKpiUsersSub', `KPI: ${Math.round(agg.kpi.users)}`);
       setCardRr('cardRrUsersSub', `RR: ${rrU}`, rrU, Math.round(agg.kpi.users));
 
-      setT('cardKpiRevenueSub', `KPI: $${(agg.kpi.revenue/1000).toFixed(1)}k`);
-      setCardRr('cardRrRevenueSub', `RR: $${(rrR/1000).toFixed(1)}k`, rrR, agg.kpi.revenue);
+      setT('cardKpiRevenueSub', `KPI: $${(agg.kpi.revenue / 1000).toFixed(1)}k`);
+      setCardRr('cardRrRevenueSub', `RR: $${(rrR / 1000).toFixed(1)}k`, rrR, agg.kpi.revenue);
 
-      setT('cardKpiBudgetSub', `KPI: $${(agg.kpi.budget/1000).toFixed(1)}k`);
-      setCardRr('cardRrBudgetSub', `RR: $${(rrB/1000).toFixed(1)}k`, rrB, agg.kpi.budget);
+      setT('cardKpiBudgetSub', `KPI: $${(agg.kpi.budget / 1000).toFixed(1)}k`);
+      setCardRr('cardRrBudgetSub', `RR: $${(rrB / 1000).toFixed(1)}k`, rrB, agg.kpi.budget);
 
-      setT('cardKpiProfitSub', `KPI: $${(agg.kpi.profit/1000).toFixed(1)}k`);
-      setCardRr('cardRrProfitSub', `RR: $${(rrP/1000).toFixed(1)}k`, rrP, agg.kpi.profit);
+      setT('cardKpiProfitSub', `KPI: $${(agg.kpi.profit / 1000).toFixed(1)}k`);
+      setCardRr('cardRrProfitSub', `RR: $${(rrP / 1000).toFixed(1)}k`, rrP, agg.kpi.profit);
 
       const rangeTxt = `${s} – ${e}`;
       setT('dateRangeNotice', rangeTxt); setT('opsPeriodBadge', rangeTxt);
@@ -1223,10 +1529,10 @@
           `;
         } else {
           tr.className = 'hover:bg-slate-50 bg-white';
-          const brandDisplay = isEspIpExpanded 
-            ? (r.brand || '-') 
+          const brandDisplay = isEspIpExpanded
+            ? (r.brand || '-')
             : `<span class="text-slate-400 italic text-xs font-normal">All Brands (${r.brandCount || 1})</span>`;
-          
+
           tr.innerHTML = `
             <td class="py-2 px-4 text-left font-medium text-slate-800">${r.esp_ip || '-'}</td>
             <td class="py-2 px-4 text-left font-semibold text-slate-700">${r.advertiser || '-'}</td>
@@ -1249,40 +1555,40 @@
     function renderEspTable(list, agg) {
       const tb = $('espTableBody'), tf = $('espTableFoot'); tb.innerHTML = '';
       list.forEach(i => {
-        const v = i.delivered + (i.softBounce||0) + (i.hardBounce||0);
-        tb.innerHTML += `<tr class="esp-summary-row"><td class="py-3 px-4 text-left font-bold">${i.esp}</td><td class="py-3 px-4 font-mono">${v.toLocaleString()}</td><td class="py-3 px-4 font-mono">${i.delivered.toLocaleString()}</td><td class="py-3 px-4 font-mono text-amber-700">${(i.softBounce||0).toLocaleString()}</td><td class="py-3 px-4 font-mono text-rose-700">${(i.hardBounce||0).toLocaleString()}</td><td class="py-3 px-4 font-mono text-emerald-700">${i.opened.toLocaleString()}</td><td class="py-3 px-4 font-mono text-sky-700">${i.clicked.toLocaleString()}</td><td class="py-3 px-4 font-mono text-amber-600">${(i.signups||0).toLocaleString()}</td><td class="py-3 px-4 font-mono text-indigo-600">${(i.players||0).toLocaleString()}</td></tr>`;
-        Object.entries(i.domains||{}).forEach(([dom, d]) => {
-          tb.innerHTML += `<tr class="domain-row text-xs text-slate-600 ${areDetailsExpanded?'':'hidden'}"><td class="py-1.5 px-4 text-left pl-8">${dom}</td><td class="font-mono">${(d.delivered+d.softBounce+d.hardBounce).toLocaleString()}</td><td>${d.delivered.toLocaleString()}</td><td class="text-amber-700">${d.softBounce.toLocaleString()}</td><td class="text-rose-700">${d.hardBounce.toLocaleString()}</td><td class="text-emerald-700">${d.opened.toLocaleString()}</td><td class="text-sky-700">${d.clicked.toLocaleString()}</td><td class="text-slate-400 font-mono text-center">-</td><td class="text-slate-400 font-mono text-center">-</td></tr>`;
+        const v = i.delivered + (i.softBounce || 0) + (i.hardBounce || 0);
+        tb.innerHTML += `<tr class="esp-summary-row"><td class="py-3 px-4 text-left font-bold">${i.esp}</td><td class="py-3 px-4 font-mono">${v.toLocaleString()}</td><td class="py-3 px-4 font-mono">${i.delivered.toLocaleString()}</td><td class="py-3 px-4 font-mono text-amber-700">${(i.softBounce || 0).toLocaleString()}</td><td class="py-3 px-4 font-mono text-rose-700">${(i.hardBounce || 0).toLocaleString()}</td><td class="py-3 px-4 font-mono text-emerald-700">${i.opened.toLocaleString()}</td><td class="py-3 px-4 font-mono text-sky-700">${i.clicked.toLocaleString()}</td><td class="py-3 px-4 font-mono text-amber-600">${(i.signups || 0).toLocaleString()}</td><td class="py-3 px-4 font-mono text-indigo-600">${(i.players || 0).toLocaleString()}</td></tr>`;
+        Object.entries(i.domains || {}).forEach(([dom, d]) => {
+          tb.innerHTML += `<tr class="domain-row text-xs text-slate-600 ${areDetailsExpanded ? '' : 'hidden'}"><td class="py-1.5 px-4 text-left pl-8">${dom}</td><td class="font-mono">${(d.delivered + d.softBounce + d.hardBounce).toLocaleString()}</td><td>${d.delivered.toLocaleString()}</td><td class="text-amber-700">${d.softBounce.toLocaleString()}</td><td class="text-rose-700">${d.hardBounce.toLocaleString()}</td><td class="text-emerald-700">${d.opened.toLocaleString()}</td><td class="text-sky-700">${d.clicked.toLocaleString()}</td><td class="text-slate-400 font-mono text-center">-</td><td class="text-slate-400 font-mono text-center">-</td></tr>`;
         });
       });
-      const totVol = (agg.delivered||0) + (agg.softBounce||0) + (agg.hardBounce||0);
-      tf.innerHTML = `<tr class="font-bold text-slate-900 text-sm"><td class="py-3.5 px-4 text-left">Grand total</td><td class="py-3.5 px-4 font-mono">${totVol.toLocaleString()}</td><td class="py-3.5 px-4 font-mono">${(agg.delivered||0).toLocaleString()}</td><td class="py-3.5 px-4 font-mono text-amber-700">${(agg.softBounce||0).toLocaleString()}</td><td class="py-3.5 px-4 font-mono text-rose-700">${(agg.hardBounce||0).toLocaleString()}</td><td class="py-3.5 px-4 font-mono text-emerald-700">${(agg.opened||0).toLocaleString()}</td><td class="py-3.5 px-4 font-mono text-sky-700">${(agg.clicked||0).toLocaleString()}</td><td class="py-3.5 px-4 font-mono text-amber-600">${(agg.espSignups||0).toLocaleString()}</td><td class="py-3.5 px-4 font-mono text-indigo-600">${(agg.espPlayers||0).toLocaleString()}</td></tr>`;
+      const totVol = (agg.delivered || 0) + (agg.softBounce || 0) + (agg.hardBounce || 0);
+      tf.innerHTML = `<tr class="font-bold text-slate-900 text-sm"><td class="py-3.5 px-4 text-left">Grand total</td><td class="py-3.5 px-4 font-mono">${totVol.toLocaleString()}</td><td class="py-3.5 px-4 font-mono">${(agg.delivered || 0).toLocaleString()}</td><td class="py-3.5 px-4 font-mono text-amber-700">${(agg.softBounce || 0).toLocaleString()}</td><td class="py-3.5 px-4 font-mono text-rose-700">${(agg.hardBounce || 0).toLocaleString()}</td><td class="py-3.5 px-4 font-mono text-emerald-700">${(agg.opened || 0).toLocaleString()}</td><td class="py-3.5 px-4 font-mono text-sky-700">${(agg.clicked || 0).toLocaleString()}</td><td class="py-3.5 px-4 font-mono text-amber-600">${(agg.espSignups || 0).toLocaleString()}</td><td class="py-3.5 px-4 font-mono text-indigo-600">${(agg.espPlayers || 0).toLocaleString()}</td></tr>`;
     }
 
     function renderOpsTeam(ops, rrF, kpi) {
-      ['signups','users'].forEach(kind => {
-        const tb = $(`ops${kind==='signups'?'Signups':'Users'}TableBody`), master = ops[`${kind}_by_advertiser`];
+      ['signups', 'users'].forEach(kind => {
+        const tb = $(`ops${kind === 'signups' ? 'Signups' : 'Users'}TableBody`), master = ops[`${kind}_by_advertiser`];
         tb.innerHTML = '';
         let [tA, tJ] = [0, 0];
-        Object.entries(master||{}).forEach(([adv, r]) => {
+        Object.entries(master || {}).forEach(([adv, r]) => {
           tA += r.andrea; tJ += r.jessie;
           tb.innerHTML += `<tr class="hover:bg-slate-50 bg-white"><td class="py-1.5 px-3 text-left font-medium text-slate-900">${adv}</td><td class="py-1.5 px-3 font-mono font-bold">${r.andrea}</td><td class="py-1.5 px-3 font-mono font-bold">${r.jessie}</td><td class="py-1.5 px-3 font-mono font-bold">${r.total}</td></tr>`;
         });
-        setT(`ops${kind==='signups'?'Signups':'Users'}AndreaTotal`, tA);
-        setT(`ops${kind==='signups'?'Signups':'Users'}JessieTotal`, tJ);
-        setT(`ops${kind==='signups'?'Signups':'Users'}GrandTotal`, tA + tJ);
+        setT(`ops${kind === 'signups' ? 'Signups' : 'Users'}AndreaTotal`, tA);
+        setT(`ops${kind === 'signups' ? 'Signups' : 'Users'}JessieTotal`, tJ);
+        setT(`ops${kind === 'signups' ? 'Signups' : 'Users'}GrandTotal`, tA + tJ);
       });
     }
 
     function renderAdvAndBrand(agg) {
       const aTb = $('advertiserTableBody'), bTb = $('brandTableBody'); aTb.innerHTML = ''; bTb.innerHTML = '';
-      Object.entries(agg.advertisers).sort((a,b) => b[1].revenue - a[1].revenue).forEach(([name, d]) => {
+      Object.entries(agg.advertisers).sort((a, b) => b[1].revenue - a[1].revenue).forEach(([name, d]) => {
         aTb.innerHTML += `<tr class="hover:bg-slate-50 bg-white"><td class="py-2.5 px-4 text-left font-medium">${name}</td><td class="py-2.5 px-4 font-mono font-bold text-amber-600">${d.signups}</td><td class="py-2.5 px-4 font-mono font-bold text-indigo-600">${d.users}</td><td class="py-2.5 px-4 font-mono font-bold text-emerald-600">$${Math.round(d.revenue).toLocaleString()}</td><td class="py-2.5 px-4 font-mono">${formatS2P(d.signups, d.users)}</td></tr>`;
       });
-      Object.entries(agg.brands).sort((a,b) => b[1].revenue - a[1].revenue).forEach(([bName, d]) => {
+      Object.entries(agg.brands).sort((a, b) => b[1].revenue - a[1].revenue).forEach(([bName, d]) => {
         bTb.innerHTML += `<tr class="hover:bg-slate-50 bg-white"><td class="py-2 px-4 text-left">${bName}</td><td class="py-2 px-4 text-left font-medium">${d.advertiser}</td><td class="py-2 px-4 font-mono font-bold text-amber-600">${d.signups}</td><td class="py-2 px-4 font-mono font-bold text-indigo-600">${d.users}</td><td class="py-2.5 px-4 font-mono font-bold text-emerald-600">$${Math.round(d.revenue).toLocaleString()}</td><td class="py-2.5 px-4 font-mono">${formatS2P(d.signups, d.users)}</td></tr>`;
       });
-      ['adv','brand'].forEach(p => {
+      ['adv', 'brand'].forEach(p => {
         setT(`${p}GrandSignups`, agg.signups); setT(`${p}GrandUsers`, agg.users);
         setT(`${p}GrandRevenue`, `$${Math.round(agg.revenue).toLocaleString()}`);
         setT(`${p}GrandS2p`, formatS2P(agg.signups, agg.users));
@@ -1293,26 +1599,26 @@
 
     function initCharts() {
       const opt = (cb) => ({ responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { grid: { color: '#f1f5f9' }, ticks: { font: { size: 9 }, callback: cb } }, x: { grid: { display: false }, ticks: { font: { size: 9 } } } } });
-      chartRefs.espVol = new Chart($('chartEspVolumen'), { type: 'bar', data: { labels: [], datasets: [{ label: 'Delivered', data: [], backgroundColor: '#2563eb' }, { label: 'Open', data: [], backgroundColor: '#10b981' }] }, options: { ...opt(v => v >= 1000 ? v/1000+'k' : v), plugins: { legend: { position: 'top' } } } });
+      chartRefs.espVol = new Chart($('chartEspVolumen'), { type: 'bar', data: { labels: [], datasets: [{ label: 'Delivered', data: [], backgroundColor: '#2563eb' }, { label: 'Open', data: [], backgroundColor: '#10b981' }] }, options: { ...opt(v => v >= 1000 ? v / 1000 + 'k' : v), plugins: { legend: { position: 'top' } } } });
       chartRefs.espClicks = new Chart($('chartEspClicks'), { type: 'bar', data: { labels: [], datasets: [{ label: 'Clicks', data: [], backgroundColor: '#0284c7' }] }, options: opt() });
       chartRefs.espOpenRate = new Chart($('chartEspOpenRate'), { type: 'bar', data: { labels: [], datasets: [{ label: 'Open Rate (%)', data: [], backgroundColor: '#10b981' }] }, options: opt(v => v + '%') });
-      chartRefs.domDeliv = new Chart($('chartDomainDelivered'), { type: 'bar', data: { labels: ['Gmail','Other','Yahoo','iCloud','Outlook','Hotmail','Aol'], datasets: [{ data: [], backgroundColor: '#3b82f6' }] }, options: opt(v => v >= 1000 ? v/1000+'k' : v) });
-      chartRefs.domOpenRate = new Chart($('chartDomainOpenRate'), { type: 'bar', data: { labels: ['iCloud','Outlook','Yahoo','Aol','Hotmail','Gmail','Other'], datasets: [{ data: [], backgroundColor: '#10b981' }] }, options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { color: '#f1f5f9' }, ticks: { callback: v => v+'%', font: { size: 9 } } }, y: { grid: { display: false }, ticks: { font: { size: 9 } } } } } });
-      chartRefs.domClicks = new Chart($('chartDomainClicks'), { type: 'bar', data: { labels: ['Gmail','Other','Yahoo','iCloud','Outlook','Aol','Hotmail'], datasets: [{ data: [], backgroundColor: '#0284c7' }] }, options: opt() });
+      chartRefs.domDeliv = new Chart($('chartDomainDelivered'), { type: 'bar', data: { labels: ['Gmail', 'Other', 'Yahoo', 'iCloud', 'Outlook', 'Hotmail', 'Aol'], datasets: [{ data: [], backgroundColor: '#3b82f6' }] }, options: opt(v => v >= 1000 ? v / 1000 + 'k' : v) });
+      chartRefs.domOpenRate = new Chart($('chartDomainOpenRate'), { type: 'bar', data: { labels: ['iCloud', 'Outlook', 'Yahoo', 'Aol', 'Hotmail', 'Gmail', 'Other'], datasets: [{ data: [], backgroundColor: '#10b981' }] }, options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { color: '#f1f5f9' }, ticks: { callback: v => v + '%', font: { size: 9 } } }, y: { grid: { display: false }, ticks: { font: { size: 9 } } } } } });
+      chartRefs.domClicks = new Chart($('chartDomainClicks'), { type: 'bar', data: { labels: ['Gmail', 'Other', 'Yahoo', 'iCloud', 'Outlook', 'Aol', 'Hotmail'], datasets: [{ data: [], backgroundColor: '#0284c7' }] }, options: opt() });
     }
 
     function updateCharts(agg) {
       if (!chartRefs.espVol) return;
-      const espLabels = (agg.esp||[]).map(e => e.esp.replace(' (Mailjet)','').replace(' (Sendgrid)',''));
+      const espLabels = (agg.esp || []).map(e => e.esp.replace(' (Mailjet)', '').replace(' (Sendgrid)', ''));
       chartRefs.espVol.data.labels = espLabels; chartRefs.espVol.data.datasets[0].data = agg.esp.map(e => e.delivered); chartRefs.espVol.data.datasets[1].data = agg.esp.map(e => e.opened); chartRefs.espVol.update();
       chartRefs.espClicks.data.labels = espLabels; chartRefs.espClicks.data.datasets[0].data = agg.esp.map(e => e.clicked); chartRefs.espClicks.update();
-      chartRefs.espOpenRate.data.labels = espLabels; chartRefs.espOpenRate.data.datasets[0].data = agg.esp.map(e => e.delivered > 0 ? +((e.opened/e.delivered)*100).toFixed(2) : 0); chartRefs.espOpenRate.update();
+      chartRefs.espOpenRate.data.labels = espLabels; chartRefs.espOpenRate.data.datasets[0].data = agg.esp.map(e => e.delivered > 0 ? +((e.opened / e.delivered) * 100).toFixed(2) : 0); chartRefs.espOpenRate.update();
 
-      const dAgg = { Gmail:0, Other:0, Yahoo:0, iCloud:0, Outlook:0, Hotmail:0, Aol:0 }, dOp = { ...dAgg }, dCl = { ...dAgg };
-      (agg.esp||[]).forEach(e => Object.entries(e.domains||{}).forEach(([dom, v]) => { if (dAgg[dom]!==undefined) { dAgg[dom]+=v.delivered; dOp[dom]+=v.opened; dCl[dom]+=v.clicked; } }));
-      chartRefs.domDeliv.data.datasets[0].data = ['Gmail','Other','Yahoo','iCloud','Outlook','Hotmail','Aol'].map(d => dAgg[d]); chartRefs.domDeliv.update();
-      chartRefs.domOpenRate.data.datasets[0].data = ['iCloud','Outlook','Yahoo','Aol','Hotmail','Gmail','Other'].map(d => dAgg[d] > 0 ? +((dOp[d]/dAgg[d])*100).toFixed(2) : 0); chartRefs.domOpenRate.update();
-      chartRefs.domClicks.data.datasets[0].data = ['Gmail','Other','Yahoo','iCloud','Outlook','Aol','Hotmail'].map(d => dCl[d]); chartRefs.domClicks.update();
+      const dAgg = { Gmail: 0, Other: 0, Yahoo: 0, iCloud: 0, Outlook: 0, Hotmail: 0, Aol: 0 }, dOp = { ...dAgg }, dCl = { ...dAgg };
+      (agg.esp || []).forEach(e => Object.entries(e.domains || {}).forEach(([dom, v]) => { if (dAgg[dom] !== undefined) { dAgg[dom] += v.delivered; dOp[dom] += v.opened; dCl[dom] += v.clicked; } }));
+      chartRefs.domDeliv.data.datasets[0].data = ['Gmail', 'Other', 'Yahoo', 'iCloud', 'Outlook', 'Hotmail', 'Aol'].map(d => dAgg[d]); chartRefs.domDeliv.update();
+      chartRefs.domOpenRate.data.datasets[0].data = ['iCloud', 'Outlook', 'Yahoo', 'Aol', 'Hotmail', 'Gmail', 'Other'].map(d => dAgg[d] > 0 ? +((dOp[d] / dAgg[d]) * 100).toFixed(2) : 0); chartRefs.domOpenRate.update();
+      chartRefs.domClicks.data.datasets[0].data = ['Gmail', 'Other', 'Yahoo', 'iCloud', 'Outlook', 'Aol', 'Hotmail'].map(d => dCl[d]); chartRefs.domClicks.update();
     }
 
     function sortTable(tableId, col, btn, type) {
@@ -1348,4 +1654,5 @@
     });
   </script>
 </body>
+
 </html>
