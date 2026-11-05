@@ -43,36 +43,6 @@
     <span id="saveToastText">Updated</span>
   </div>
 
-  <!-- VIEW / EDIT JSON MODAL -->
-  <div id="jsonModal" onclick="if(event.target === this) closeJsonModal()" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
-    <div class="relative w-full max-w-3xl bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[88vh]">
-      <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-slate-50">
-        <div class="flex items-center gap-2.5">
-          <div class="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center"><i data-lucide="code" class="w-4 h-4"></i></div>
-          <div>
-            <h3 class="text-sm font-bold font-display text-slate-900">View / Edit JSON</h3>
-            <span id="jsonPathBadge" class="text-[10px] font-mono text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-200">Loading...</span>
-          </div>
-        </div>
-        <button onclick="closeJsonModal()" class="w-8 h-8 rounded-lg text-slate-400 hover:text-slate-600 flex items-center justify-center cursor-pointer"><i data-lucide="x" class="w-4 h-4"></i></button>
-      </div>
-      <div class="p-4 bg-[#0B1120] flex-1 flex flex-col">
-        <textarea id="jsonModalCode" spellcheck="false" class="w-full h-96 bg-transparent text-emerald-400 font-mono text-xs leading-relaxed outline-none resize-none custom-scrollbar"></textarea>
-      </div>
-      <div class="flex items-center justify-between px-6 py-3.5 border-t border-slate-200 bg-white flex-wrap gap-2">
-        <span class="text-xs text-slate-500">Live JSON auto-calculated</span>
-        <div class="flex items-center gap-2">
-          <button onclick="copyJsonToClipboard()" class="px-3.5 py-2 text-xs font-bold rounded-lg bg-slate-800 hover:bg-black text-white flex items-center gap-1.5 cursor-pointer">
-            <i data-lucide="copy" class="w-3.5 h-3.5"></i><span id="copyBtnText">Copy JSON</span>
-          </button>
-          <button id="applyJsonBtn" onclick="applyJsonFromModal()" class="px-4 py-2 text-xs font-bold rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white flex items-center gap-1.5 cursor-pointer">
-            <i data-lucide="git-commit" class="w-3.5 h-3.5"></i><span>Apply &amp; Save to Git</span>
-          </button>
-        </div>
-      </div>
-    </div>
-  </div>
-
   <!-- HEADER -->
   <header class="sticky top-0 z-30 bg-white/95 backdrop-blur border-b border-slate-200 shadow-xs">
     <div class="max-w-[1700px] mx-auto px-4 sm:px-6 lg:px-8 py-2">
@@ -95,7 +65,7 @@
         </div>
 
         <div class="flex items-center gap-2.5 flex-wrap">
-          <!-- DATE PICKER (DAY LEVEL) -->
+          <!-- DATE PICKER -->
           <div class="flex items-center gap-2 font-bold text-xs">
             <span class="text-slate-400">FROM</span>
             <div class="relative">
@@ -141,21 +111,10 @@
             <i data-lucide="save" class="w-3.5 h-3.5"></i><span id="saveGitBtnText">Save to Git</span>
           </button>
 
-          <button onclick="openJsonModal()" class="px-3.5 py-1.5 text-xs font-bold rounded-lg bg-white border-2 border-slate-900 text-slate-900 hover:bg-slate-50 cursor-pointer flex items-center gap-1.5">
-            <i data-lucide="code" class="w-3.5 h-3.5"></i><span>View JSON</span>
-          </button>
-
           <!-- BOTÓN EXPORT EXCEL -->
           <button onclick="exportToExcel()" class="px-3.5 py-1.5 text-xs font-bold rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs transition flex items-center gap-1.5 cursor-pointer">
             <i data-lucide="file-spreadsheet" class="w-3.5 h-3.5"></i><span>Export Excel</span>
           </button>
-
-          <select id="platformFilter" onchange="filterPlatform()" class="px-3 py-1.5 text-xs font-medium text-slate-700 bg-slate-50 border border-slate-200 rounded-lg cursor-pointer outline-none">
-            <option value="all">All Platforms</option>
-            <option value="meta">Meta Ads</option>
-            <option value="instagram">Instagram Ads</option>
-            <option value="x">X Campaigns</option>
-          </select>
         </div>
 
       </div>
@@ -205,7 +164,6 @@
                 <td class="py-3 px-2 font-extrabold text-[13px]" id="tpRrUsers">0</td>
                 <td class="py-3 px-2 font-extrabold text-[13px]" id="tpRrRevenue">$0</td>
                 <td class="py-3 px-2 font-extrabold text-[13px]" id="tpRrProfit">$0</td>
-                <!-- TEAM ROI EN FORMATO RATIO (1:X) -->
                 <td class="py-3 px-2 font-extrabold text-[13px]" id="tpRoiRatio">1:0.4</td>
               </tr>
             </tbody>
@@ -245,6 +203,9 @@
 
     <!-- PLATFORM TABLES (META, INSTAGRAM, X) -->
     <div id="platformsContainer" class="space-y-8"></div>
+
+    <!-- PERFORMANCE TAKE AWAYS TABLES (DEBAJO DE X Y ARRIBA DE LAS GRAFICAS) -->
+    <div id="takeawaysContainer" class="space-y-8 pt-4 border-t border-slate-200"></div>
 
     <!-- CHARTS -->
     <div class="space-y-6 pt-4 border-t border-slate-200">
@@ -299,12 +260,10 @@
     const shortMonthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
     const fullMonthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
     
-    // DETECCIÓN DINÁMICA DEL MES Y AÑO ACTUAL POR DEFECTO
     const sysToday = new Date();
     let currentLoadedYear = sysToday.getFullYear();
     let currentLoadedMonth = fullMonthNames[sysToday.getMonth()];
 
-    // FECHAS POR DÍA
     let fromDate = new Date(sysToday.getFullYear(), sysToday.getMonth(), 1);
     let toDate = new Date(sysToday.getFullYear(), sysToday.getMonth(), sysToday.getDate());
     let fromViewYear = fromDate.getFullYear(), fromViewMonth = fromDate.getMonth();
@@ -313,8 +272,7 @@
     const fmtDateUS = d => {
       const mm = String(d.getMonth() + 1).padStart(2, '0');
       const dd = String(d.getDate()).padStart(2, '0');
-      const yyyy = d.getFullYear();
-      return `${mm}/${dd}/${yyyy}`;
+      return `${mm}/${dd}/${d.getFullYear()}`;
     };
 
     function updateDatesUI() {
@@ -322,36 +280,21 @@
       setTxt('toDateText', fmtDateUS(toDate));
     }
 
-    // CONDICIÓN ESTRICTA: SOLO SE PUEDE EDITAR SI SE ESTÁ EN EL MOMENTO OFICIAL
     function isEditingAllowed() {
       if (!fromDate || !toDate) return false;
       const startD = fromDate <= toDate ? fromDate : toDate;
       const endD = fromDate <= toDate ? toDate : fromDate;
 
-      // Debe ser el mismo mes
-      if (startD.getFullYear() !== endD.getFullYear() || startD.getMonth() !== endD.getMonth()) {
-        return false;
-      }
-
-      // Debe empezar el día 01
-      if (startD.getDate() !== 1) {
-        return false;
-      }
+      if (startD.getFullYear() !== endD.getFullYear() || startD.getMonth() !== endD.getMonth()) return false;
+      if (startD.getDate() !== 1) return false;
 
       const now = new Date();
       const isCurrentMonth = (endD.getFullYear() === now.getFullYear() && endD.getMonth() === now.getMonth());
       const totalDaysInMonth = new Date(endD.getFullYear(), endD.getMonth() + 1, 0).getDate();
 
-      if (isCurrentMonth) {
-        // Mes actual: solo si está en el día de hoy
-        return endD.getDate() === now.getDate();
-      } else {
-        // Mes pasado: solo si está en el último día del mes (31, 30, etc.)
-        return endD.getDate() === totalDaysInMonth;
-      }
+      return isCurrentMonth ? endD.getDate() === now.getDate() : endD.getDate() === totalDaysInMonth;
     }
 
-    // VARIABLES DE CONTROL DE ESPERA (COOLDOWN DE 5 MINUTOS)
     const COOLDOWN_KEY = "wisekapital_save_cooldown_target";
     const COOLDOWN_DURATION_SEC = 5 * 60;
     let isSaveCooldown = false;
@@ -440,24 +383,19 @@
     };
     const getRrColorClass = (rr, kpi) => { const r = toNum(rr), k = toNum(kpi); return (k > 0 ? r >= k : r > 0) ? 'text-emerald-700 font-bold' : 'text-rose-600 font-bold'; };
 
-    // DETECTAR DÍAS BASE REGISTRADOS EN EL JSON
     function getBaseDaysOfData(data, year, monthIdx) {
       const totalDaysInMonth = new Date(year, monthIdx + 1, 0).getDate();
       if (data && data.period) {
         const m = String(data.period).match(/(\d{1,2})\s*-\s*(\d{1,2})/);
         if (m) {
-          const s = parseInt(m[1], 10);
-          const e = parseInt(m[2], 10);
-          if (!isNaN(s) && !isNaN(e) && e >= s) {
-            return (e - s + 1);
-          }
+          const s = parseInt(m[1], 10), e = parseInt(m[2], 10);
+          if (!isNaN(s) && !isNaN(e) && e >= s) return (e - s + 1);
         }
       }
       const isCurrentMonth = (year === sysToday.getFullYear() && monthIdx === sysToday.getMonth());
       return isCurrentMonth ? Math.max(1, sysToday.getDate()) : totalDaysInMonth;
     }
 
-    // CÁLCULO DINÁMICO UNIVERSAL DEL FACTOR DE RUN-RATE
     function calculateAutoRR(val) {
       const n = toNum(val);
       if (n <= 0) return 0;
@@ -471,8 +409,7 @@
         return Math.round(n * (totalDays / daysSelected));
       } else {
         const months = getMonthsInRange(startD, endD);
-        let totalDaysInInvolvedMonths = 0;
-        let totalDaysSelected = 0;
+        let totalDaysInInvolvedMonths = 0, totalDaysSelected = 0;
 
         for (let mIdx = 0; mIdx < months.length; mIdx++) {
           const m = months[mIdx];
@@ -490,7 +427,6 @@
       }
     }
 
-    // FORMATEO DINÁMICO DE FECHA SEGÚN DÍAS
     function getDynamicPeriodString(startD, endD) {
       const s = startD <= endD ? startD : endD;
       const e = startD <= endD ? endD : startD;
@@ -499,81 +435,60 @@
       const sMonthName = fullMonthNames[s.getMonth()];
       const eMonthName = fullMonthNames[e.getMonth()];
 
-      if (s.getFullYear() === e.getFullYear() && s.getMonth() === e.getMonth()) {
-        return `${sMonthName} ${sDayStr}-${eDayStr}, ${s.getFullYear()}`;
-      } else {
-        return `${sMonthName} ${sDayStr}, ${s.getFullYear()} – ${eMonthName} ${eDayStr}, ${e.getFullYear()}`;
-      }
+      return s.getFullYear() === e.getFullYear() && s.getMonth() === e.getMonth()
+        ? `${sMonthName} ${sDayStr}-${eDayStr}, ${s.getFullYear()}`
+        : `${sMonthName} ${sDayStr}, ${s.getFullYear()} – ${eMonthName} ${eDayStr}, ${e.getFullYear()}`;
     }
 
     function calculateRoi(revenue, spent) {
-      const sp = toNum(spent);
-      const rev = toNum(revenue);
+      const sp = toNum(spent), rev = toNum(revenue);
       if (sp <= 0) return rev > 0 ? '+100.0%' : '0.0%';
       const roiPercent = ((rev - sp) / sp) * 100;
-      const sign = roiPercent > 0 ? '+' : '';
-      return `${sign}${roiPercent.toFixed(1)}%`;
+      return `${roiPercent > 0 ? '+' : ''}${roiPercent.toFixed(1)}%`;
     }
 
     function getRoiColorClass(revenue, spent) {
-      const sp = toNum(spent);
-      const rev = toNum(revenue);
+      const sp = toNum(spent), rev = toNum(revenue);
       if (sp <= 0) return rev > 0 ? 'text-emerald-700 font-extrabold' : 'text-slate-400 font-extrabold';
       const roiPercent = ((rev - sp) / sp) * 100;
-      if (roiPercent > 0) return 'text-emerald-700 font-extrabold';
-      if (roiPercent < 0) return 'text-rose-600 font-extrabold';
-      return 'text-slate-500 font-extrabold';
+      return roiPercent > 0 ? 'text-emerald-700 font-extrabold' : roiPercent < 0 ? 'text-rose-600 font-extrabold' : 'text-slate-500 font-extrabold';
     }
 
-    // TOGGLE CALENDARIO
     function toggleCal(t, e) {
       e?.stopPropagation();
       document.getElementById(t === 'from' ? 'toPop' : 'fromPop').classList.add('hidden');
       const pop = document.getElementById(t + 'Pop');
       pop.classList.toggle('hidden');
       if (!pop.classList.contains('hidden')) {
-        if (t === 'from') {
-          fromViewYear = fromDate.getFullYear();
-          fromViewMonth = fromDate.getMonth();
-        } else {
-          toViewYear = toDate.getFullYear();
-          toViewMonth = toDate.getMonth();
-        }
+        if (t === 'from') { fromViewYear = fromDate.getFullYear(); fromViewMonth = fromDate.getMonth(); }
+        else { toViewYear = toDate.getFullYear(); toViewMonth = toDate.getMonth(); }
         renderDaysGrid(t);
       }
     }
 
-    // NAVEGACIÓN DE MESES
     function navCalMonth(t, s, e) {
       e?.stopPropagation();
       if (t === 'from') {
         fromViewMonth += s;
         if (fromViewMonth < 0) { fromViewMonth = 11; fromViewYear--; }
         else if (fromViewMonth > 11) { fromViewMonth = 0; fromViewYear++; }
-        if (fromViewYear < 2026 || (fromViewYear === 2026 && fromViewMonth < 9)) {
-          fromViewYear = 2026; fromViewMonth = 9;
-        }
+        if (fromViewYear < 2026 || (fromViewYear === 2026 && fromViewMonth < 9)) { fromViewYear = 2026; fromViewMonth = 9; }
       } else {
         toViewMonth += s;
         if (toViewMonth < 0) { toViewMonth = 11; toViewYear--; }
         else if (toViewMonth > 11) { toViewMonth = 0; toViewYear++; }
-        if (toViewYear < 2026 || (toViewYear === 2026 && toViewMonth < 9)) {
-          toViewYear = 2026; toViewMonth = 9;
-        }
+        if (toViewYear < 2026 || (toViewYear === 2026 && toViewMonth < 9)) { toViewYear = 2026; toViewMonth = 9; }
       }
       renderDaysGrid(t);
     }
 
-    // RENDERIZADO DEL CALENDARIO POR DÍA
     function renderDaysGrid(t) {
       const isFrom = (t === 'from');
       const year = isFrom ? fromViewYear : toViewYear;
       const month = isFrom ? fromViewMonth : toViewMonth;
       const activeDate = isFrom ? fromDate : toDate;
 
-      const labelId = isFrom ? 'fromMonthYearLabel' : 'toMonthYearLabel';
-      setTxt(labelId, `${fullMonthNames[month].toUpperCase()} ${year}`);
-
+      setTxt(isFrom ? 'fromMonthYearLabel' : 'toMonthYearLabel', `${fullMonthNames[month].toUpperCase()} ${year}`);
       const grid = document.getElementById(t + 'DaysGrid');
       if (!grid) return;
       grid.innerHTML = '';
@@ -600,21 +515,11 @@
         const isFuture = dayDate > today;
         const isPastMin = (year < 2026 || (year === 2026 && month < 9));
         const isDisabled = isFuture || isPastMin;
+        const isSelected = (activeDate.getFullYear() === year && activeDate.getMonth() === month && activeDate.getDate() === day);
 
-        const isSelected = (
-          activeDate.getFullYear() === year &&
-          activeDate.getMonth() === month &&
-          activeDate.getDate() === day
-        );
-
-        if (isDisabled) {
-          cell.className = 'w-8 h-8 flex items-center justify-center rounded-xl text-slate-300 font-semibold cursor-not-allowed select-none';
-          cell.disabled = true;
-        } else if (isSelected) {
-          cell.className = 'w-8 h-8 flex items-center justify-center rounded-xl bg-emerald-600 text-white font-extrabold shadow-sm select-none cursor-pointer';
-        } else {
-          cell.className = 'w-8 h-8 flex items-center justify-center rounded-xl text-slate-800 hover:bg-slate-100 font-bold transition select-none cursor-pointer';
-        }
+        if (isDisabled) cell.className = 'w-8 h-8 flex items-center justify-center rounded-xl text-slate-300 font-semibold cursor-not-allowed select-none';
+        else if (isSelected) cell.className = 'w-8 h-8 flex items-center justify-center rounded-xl bg-emerald-600 text-white font-extrabold shadow-sm select-none cursor-pointer';
+        else cell.className = 'w-8 h-8 flex items-center justify-center rounded-xl text-slate-800 hover:bg-slate-100 font-bold transition select-none cursor-pointer';
 
         if (!isDisabled) {
           cell.onclick = (e) => {
@@ -631,7 +536,6 @@
             loadDataForRange(fromDate, toDate);
           };
         }
-
         grid.appendChild(cell);
       }
       lucide.createIcons();
@@ -649,11 +553,7 @@
       let curr = new Date(s.getFullYear(), s.getMonth(), 1);
       const last = new Date(e.getFullYear(), e.getMonth(), 1);
       while (curr <= last) {
-        list.push({
-          year: curr.getFullYear(),
-          monthIndex: curr.getMonth(),
-          monthName: fullMonthNames[curr.getMonth()]
-        });
+        list.push({ year: curr.getFullYear(), monthIndex: curr.getMonth(), monthName: fullMonthNames[curr.getMonth()] });
         curr.setMonth(curr.getMonth() + 1);
       }
       return list;
@@ -662,9 +562,7 @@
     function distributeKpisToCampaigns() {
       if (!appData || !appData.campaigns || !appData.kpis) return;
       const allCamps = appData.campaigns;
-      const count = allCamps.length || 1;
-      const totalBudget = toNum(appData.kpis.budget);
-      const bPer = Math.round(totalBudget / count);
+      const bPer = Math.round(toNum(appData.kpis.budget) / (allCamps.length || 1));
       allCamps.forEach(c => { c.budget = bPer; });
     }
 
@@ -677,22 +575,18 @@
     }
 
     function addCampaign(platform) {
-      if (!isEditingAllowed()) {
-        alert("Editing is disabled for this date range.");
-        return;
-      }
+      if (!isEditingAllowed()) { alert("Editing is disabled for this date range."); return; }
       if (!appData) appData = createEmptyMonth(currentLoadedMonth, currentLoadedYear);
       const newCamp = {
         id: `camp_${Date.now()}_${Math.random().toString(36).slice(2,6)}`,
         name: `New Campaign`, platform, highlight: false,
         budget: 0, spent: 0, rrBudget: 0, dailyBudget: 0, impKpi: 0, impMtd: 0, impRr: 0,
         productViews: 0, v2p: 0, clicksKpi: 0, clicksMtd: 0, clicksRr: 0, ctr: "0.0%",
-        regKpi: 0, regMtd: 0, regRr: 0, usersFtp: 0, usersMtd: 0, usersRr: 0, s2p: "0.0%", revenue: 0, roi: "0.0%"
+        regKpi: 0, regMtd: 0, regRr: 0, usersFtp: 0, usersMtd: 0, usersRr: 0, s2p: "0.0%", revenue: 0, roi: "0.0%",
+        takeaways: "", lessons: "", improvements: ""
       };
       appData.campaigns.push(newCamp);
-      if (rawMonthData && rawMonthData.campaigns) {
-        rawMonthData.campaigns.push({ ...newCamp });
-      }
+      if (rawMonthData && rawMonthData.campaigns) rawMonthData.campaigns.push({ ...newCamp });
       distributeKpisToCampaigns();
       renderDashboard();
       showSaveToast(`Added campaign to ${platform.toUpperCase()}. Click "Save to Git" to commit.`);
@@ -700,15 +594,10 @@
 
     function deleteCampaign(id, e) {
       e?.stopPropagation();
-      if (!isEditingAllowed()) {
-        alert("Editing is disabled for this date range.");
-        return;
-      }
+      if (!isEditingAllowed()) { alert("Editing is disabled for this date range."); return; }
       if (!confirm("Delete this campaign?")) return;
       appData.campaigns = (appData.campaigns || []).filter(c => String(c.id) !== String(id));
-      if (rawMonthData && rawMonthData.campaigns) {
-        rawMonthData.campaigns = rawMonthData.campaigns.filter(c => String(c.id) !== String(id));
-      }
+      if (rawMonthData && rawMonthData.campaigns) rawMonthData.campaigns = rawMonthData.campaigns.filter(c => String(c.id) !== String(id));
       distributeKpisToCampaigns();
       renderDashboard();
       showSaveToast('Campaign removed. Click "Save to Git" to commit.');
@@ -732,20 +621,15 @@
       };
     }
 
-    // VALIDACIÓN ESTRICTA EN INGLÉS AL GUARDAR
     function validateSaveAllowed() {
       if (!isEditingAllowed()) {
         const now = new Date();
-        const startD = fromDate <= toDate ? fromDate : toDate;
         const endD = fromDate <= toDate ? toDate : fromDate;
         const isCurrentMonth = (endD.getFullYear() === now.getFullYear() && endD.getMonth() === now.getMonth());
         const totalDaysInMonth = new Date(endD.getFullYear(), endD.getMonth() + 1, 0).getDate();
         const targetDay = isCurrentMonth ? now.getDate() : totalDaysInMonth;
         const expectedDateStr = `${String(endD.getMonth() + 1).padStart(2, '0')}/${String(targetDay).padStart(2, '0')}/${endD.getFullYear()}`;
-        const reason = isCurrentMonth
-          ? `today's date (${expectedDateStr}) for the current month`
-          : `the last day of the month (${expectedDateStr}) for past months`;
-
+        const reason = isCurrentMonth ? `today's date (${expectedDateStr}) for the current month` : `the last day of the month (${expectedDateStr}) for past months`;
         alert(`Cannot save: Saving is only allowed from day 01 to ${reason}. Please update your selection before saving.`);
         return false;
       }
@@ -754,18 +638,13 @@
 
     async function saveDashboardData(silentAutoCreate = false) {
       if (!appData) return;
-
       if (!silentAutoCreate) {
         if (!validateSaveAllowed()) return;
-        if (isSaveCooldown) {
-          showSaveToast(`⏳ Wait ${fmtCooldownTime(cooldownRemaining)} before saving again.`);
-          return;
-        }
+        if (isSaveCooldown) { showSaveToast(`⏳ Wait ${fmtCooldownTime(cooldownRemaining)} before saving again.`); return; }
       }
 
       const btn = document.getElementById('saveGitBtn');
       const btnText = document.getElementById('saveGitBtnText');
-
       if (!silentAutoCreate) {
         if (btn) btn.disabled = true;
         if (btnText) btnText.innerText = "Saving...";
@@ -826,45 +705,6 @@
       }
     }
 
-    function openJsonModal() {
-      if (!appData) return;
-      document.getElementById('jsonModalCode').value = JSON.stringify(getCleanData(), null, 2);
-      setTxt('jsonPathBadge', `${currentLoadedYear}/${currentLoadedMonth}/data.json`);
-      const applyBtn = document.getElementById('applyJsonBtn');
-      if (applyBtn) {
-        applyBtn.style.display = isEditingAllowed() ? 'flex' : 'none';
-      }
-      document.getElementById('jsonModal').classList.remove('hidden');
-      lucide.createIcons();
-    }
-
-    function closeJsonModal() { document.getElementById('jsonModal').classList.add('hidden'); }
-
-    async function copyJsonToClipboard() {
-      await navigator.clipboard.writeText(document.getElementById('jsonModalCode').value);
-      setTxt('copyBtnText', "Copied!");
-      showSaveToast("✅ JSON copied to clipboard!");
-      setTimeout(() => setTxt('copyBtnText', "Copy JSON"), 2000);
-    }
-
-    async function applyJsonFromModal() {
-      if (!validateSaveAllowed()) return;
-      if (isSaveCooldown) {
-        showSaveToast(`⏳ Wait ${fmtCooldownTime(cooldownRemaining)} before saving again.`);
-        return;
-      }
-      try {
-        const parsed = JSON.parse(document.getElementById('jsonModalCode').value);
-        rawMonthData = JSON.parse(JSON.stringify(parsed));
-        rawMonthData._cacheKey = `${currentLoadedYear}_${currentLoadedMonth}`;
-        await loadDataForRange(fromDate, toDate);
-        closeJsonModal();
-        await saveDashboardData(false);
-      } catch (err) {
-        alert("Invalid JSON format: " + err.message);
-      }
-    }
-
     function setLiveBadge(label) {
       const b = document.getElementById('liveStatusBadge');
       if (b) b.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1 inline-block animate-pulse"></span> ${label}`;
@@ -882,30 +722,21 @@
           const res = await fetch(apiUrl, { cache: 'no-store', headers });
           if (res.ok) {
             const fileObj = await res.json();
-            if (fileObj && fileObj.content) {
-              const data = JSON.parse(b64ToUtf8(fileObj.content));
-              return { status: 'found', data };
-            }
-          } else if (res.status === 404) {
-            got404 = true;
-          }
+            if (fileObj && fileObj.content) return { status: 'found', data: JSON.parse(b64ToUtf8(fileObj.content)) };
+          } else if (res.status === 404) got404 = true;
         } catch (e) {}
       }
 
       for (const rel of candidates) {
         try {
           const res = await fetch(`./${rel}?nocache=${Date.now()}`, { cache: 'no-store' });
-          if (res.ok) {
-            const data = await res.json();
-            return { status: 'found', data };
-          }
+          if (res.ok) return { status: 'found', data: await res.json() };
         } catch (e) {}
       }
 
       return { status: got404 ? 'not_found' : 'error', data: null };
     }
 
-    // CARGA DE DATOS: PREDICCIÓN PROPORCIONAL UNIVERSAL (MONO-MES Y MULTI-MES)
     async function loadDataForRange(startObj, endObj) {
       const startD = startObj <= endObj ? startObj : endObj;
       const endD = startObj <= endObj ? endObj : startObj;
@@ -928,13 +759,10 @@
             rawMonthData = createEmptyMonth(monthName, year);
             rawMonthData._cacheKey = currentKey;
             setLiveBadge(`New (${monthName})`);
-            if (result.status === 'not_found' && GITHUB_TOKEN) {
-              await saveDashboardData(true);
-            }
+            if (result.status === 'not_found' && GITHUB_TOKEN) await saveDashboardData(true);
           }
         }
 
-        const totalDaysInMonth = new Date(year, monthIndex + 1, 0).getDate();
         const baseDays = getBaseDaysOfData(rawMonthData, year, monthIndex);
         const selectedDays = Math.max(1, endD.getDate() - startD.getDate() + 1);
         const scaleFactor = selectedDays / baseDays;
@@ -959,22 +787,14 @@
           const revenue = Math.round((baseRev * scaleFactor) * 100) / 100;
           const dailyBudget = selectedDays > 0 ? Math.round(spent / selectedDays) : 0;
 
-          const rrBudget = calculateAutoRR(spent);
-          const impRr = calculateAutoRR(impMtd);
-          const clicksRr = calculateAutoRR(clicksMtd);
-          const regRr = calculateAutoRR(regMtd);
-          const usersRr = calculateAutoRR(usersMtd);
-
           return {
             ...c,
             id: c.id || `c_${i}_${Date.now()}`,
-            // LOS KPIS NO CAMBIAN
             budget: toNum(c.budget),
             impKpi: toNum(c.impKpi),
             clicksKpi: toNum(c.clicksKpi),
             regKpi: c.regKpi !== undefined ? toNum(c.regKpi) : 0,
             usersFtp: c.usersFtp !== undefined ? toNum(c.usersFtp) : 0,
-            // DATOS ESCALADOS PROPORCIONALMENTE
             spent,
             dailyBudget,
             impMtd,
@@ -984,11 +804,14 @@
             regMtd,
             usersMtd,
             revenue,
-            rrBudget,
-            impRr,
-            clicksRr,
-            regRr,
-            usersRr,
+            rrBudget: calculateAutoRR(spent),
+            impRr: calculateAutoRR(impMtd),
+            clicksRr: calculateAutoRR(clicksMtd),
+            regRr: calculateAutoRR(regMtd),
+            usersRr: calculateAutoRR(usersMtd),
+            takeaways: c.takeaways || "",
+            lessons: c.lessons || "",
+            improvements: c.improvements || "",
             ctr: impMtd > 0 ? ((clicksMtd / impMtd) * 100).toFixed(1) + '%' : '0.0%',
             s2p: regMtd > 0 ? ((usersMtd / regMtd) * 100).toFixed(1) + '%' : '0.0%',
             roi: calculateRoi(revenue, spent)
@@ -1005,15 +828,12 @@
         setTxt('dateAutoInfo', appData.period);
         renderDashboard();
       } else {
-        // MODO MULTI-MES
         setLiveBadge(`Range (${months.length} Months)`);
         setTxt('headerPathBadge', `${months[0].year}/${months[0].monthName} – ${months[months.length-1].year}/${months[months.length-1].monthName}`);
 
         let mergedKpis = { budget: 0, signups: 0, users: 0, revenue: 0, profit: 0 };
         const campMap = new Map();
-
-        let totalDaysInInvolvedMonths = 0;
-        let totalDaysSelected = 0;
+        let totalDaysInInvolvedMonths = 0, totalDaysSelected = 0;
 
         for (let mIdx = 0; mIdx < months.length; mIdx++) {
           const m = months[mIdx];
@@ -1030,7 +850,6 @@
           const res = await fetchFreshJson(m.year, m.monthName);
           if (res.status === 'found' && res.data) {
             const k = res.data.kpis || {};
-            // LOS KPIS EN MULTI-MES SOLO SE SUMAN DIRECTAMENTE
             mergedKpis.budget += toNum(k.budget);
             mergedKpis.signups += toNum(k.signups);
             mergedKpis.users += toNum(k.users);
@@ -1042,7 +861,6 @@
 
             (res.data.campaigns || []).forEach(c => {
               const key = `${(c.platform || '').toLowerCase()}__${(c.name || '').trim()}`;
-
               const sSpent = toNum(c.spent) * scaleFactorMonth;
               const sImp = toNum(c.impMtd) * scaleFactorMonth;
               const sPv = toNum(c.productViews) * scaleFactorMonth;
@@ -1056,96 +874,52 @@
                 campMap.set(key, {
                   ...c,
                   id: `c_agg_${key}`,
-                  budget: toNum(c.budget),
-                  impKpi: toNum(c.impKpi),
-                  clicksKpi: toNum(c.clicksKpi),
-                  regKpi: toNum(c.regKpi),
-                  usersFtp: toNum(c.usersFtp),
-                  spent: sSpent,
-                  impMtd: sImp,
-                  productViews: sPv,
-                  v2p: sV2p,
-                  clicksMtd: sClicks,
-                  regMtd: sReg,
-                  usersMtd: sUsers,
-                  revenue: sRev
+                  budget: toNum(c.budget), impKpi: toNum(c.impKpi), clicksKpi: toNum(c.clicksKpi), regKpi: toNum(c.regKpi), usersFtp: toNum(c.usersFtp),
+                  spent: sSpent, impMtd: sImp, productViews: sPv, v2p: sV2p, clicksMtd: sClicks, regMtd: sReg, usersMtd: sUsers, revenue: sRev,
+                  takeaways: c.takeaways || "", lessons: c.lessons || "", improvements: c.improvements || ""
                 });
               } else {
                 const ex = campMap.get(key);
-                ex.budget += toNum(c.budget);
-                ex.impKpi += toNum(c.impKpi);
-                ex.clicksKpi += toNum(c.clicksKpi);
-                ex.regKpi += toNum(c.regKpi);
-                ex.usersFtp += toNum(c.usersFtp);
-
-                ex.spent += sSpent;
-                ex.impMtd += sImp;
-                ex.productViews += sPv;
-                ex.v2p += sV2p;
-                ex.clicksMtd += sClicks;
-                ex.regMtd += sReg;
-                ex.usersMtd += sUsers;
-                ex.revenue += sRev;
+                ex.budget += toNum(c.budget); ex.impKpi += toNum(c.impKpi); ex.clicksKpi += toNum(c.clicksKpi); ex.regKpi += toNum(c.regKpi); ex.usersFtp += toNum(c.usersFtp);
+                ex.spent += sSpent; ex.impMtd += sImp; ex.productViews += sPv; ex.v2p += sV2p; ex.clicksMtd += sClicks; ex.regMtd += sReg; ex.usersMtd += sUsers; ex.revenue += sRev;
+                if (!ex.takeaways && c.takeaways) ex.takeaways = c.takeaways;
+                if (!ex.lessons && c.lessons) ex.lessons = c.lessons;
+                if (!ex.improvements && c.improvements) ex.improvements = c.improvements;
               }
             });
           }
         }
 
         const multiMonthRrFactor = totalDaysSelected > 0 ? (totalDaysInInvolvedMonths / totalDaysSelected) : 1.0;
-
         const mergedCamps = Array.from(campMap.values()).map(c => {
-          c.spent = Math.round(c.spent);
-          c.impMtd = Math.round(c.impMtd);
-          c.productViews = Math.round(c.productViews);
-          c.v2p = Math.round(c.v2p);
-          c.clicksMtd = Math.round(c.clicksMtd);
-          c.regMtd = Math.round(c.regMtd);
-          c.usersMtd = Math.round(c.usersMtd);
-          c.revenue = Math.round(c.revenue * 100) / 100;
+          c.spent = Math.round(c.spent); c.impMtd = Math.round(c.impMtd); c.productViews = Math.round(c.productViews); c.v2p = Math.round(c.v2p);
+          c.clicksMtd = Math.round(c.clicksMtd); c.regMtd = Math.round(c.regMtd); c.usersMtd = Math.round(c.usersMtd); c.revenue = Math.round(c.revenue * 100) / 100;
           c.dailyBudget = totalDaysSelected > 0 ? Math.round(c.spent / totalDaysSelected) : 0;
-
-          c.rrBudget = Math.round(c.spent * multiMonthRrFactor);
-          c.impRr = Math.round(c.impMtd * multiMonthRrFactor);
-          c.clicksRr = Math.round(c.clicksMtd * multiMonthRrFactor);
-          c.regRr = Math.round(c.regMtd * multiMonthRrFactor);
-          c.usersRr = Math.round(c.usersMtd * multiMonthRrFactor);
-
+          c.rrBudget = Math.round(c.spent * multiMonthRrFactor); c.impRr = Math.round(c.impMtd * multiMonthRrFactor);
+          c.clicksRr = Math.round(c.clicksMtd * multiMonthRrFactor); c.regRr = Math.round(c.regMtd * multiMonthRrFactor); c.usersRr = Math.round(c.usersMtd * multiMonthRrFactor);
           c.roi = calculateRoi(c.revenue, c.spent);
           c.ctr = c.impMtd > 0 ? ((c.clicksMtd / c.impMtd) * 100).toFixed(1) + '%' : '0.0%';
           c.s2p = c.regMtd > 0 ? ((c.usersMtd / c.regMtd) * 100).toFixed(1) + '%' : '0.0%';
           return c;
         });
 
-        appData = {
-          period: getDynamicPeriodString(startD, endD),
-          kpis: mergedKpis,
-          campaigns: mergedCamps
-        };
-
+        appData = { period: getDynamicPeriodString(startD, endD), kpis: mergedKpis, campaigns: mergedCamps };
         setTxt('dateAutoInfo', appData.period);
         renderDashboard();
       }
     }
 
     function onKpiEdit(el, field) {
-      if (!isEditingAllowed()) {
-        renderDashboard();
-        return;
-      }
+      if (!isEditingAllowed()) { renderDashboard(); return; }
       if (!appData) return;
       appData.kpis[field] = toNum(el.innerText);
-      if (rawMonthData && rawMonthData.kpis) {
-        rawMonthData.kpis[field] = toNum(el.innerText);
-      }
+      if (rawMonthData && rawMonthData.kpis) rawMonthData.kpis[field] = toNum(el.innerText);
       distributeKpisToCampaigns();
       renderDashboard();
     }
 
     function handleCellBlur(el, id, field) {
-      if (!isEditingAllowed()) {
-        renderDashboard();
-        return;
-      }
+      if (!isEditingAllowed()) { renderDashboard(); return; }
       const c = (appData.campaigns || []).find(x => String(x.id) === String(id));
       if (!c) return;
       if (field === 'name') c[field] = el.innerText.trim();
@@ -1156,14 +930,9 @@
         if (rawC) {
           const sDay = Math.min(fromDate.getDate(), toDate.getDate());
           const eDay = Math.max(fromDate.getDate(), toDate.getDate());
-          const selectedDays = Math.max(1, eDay - sDay + 1);
-          const baseDays = getBaseDaysOfData(rawMonthData, currentLoadedYear, fullMonthNames.indexOf(currentLoadedMonth));
-          const scaleFactor = selectedDays / baseDays;
-          if (scaleFactor > 0 && field !== 'name') {
-            rawC[field] = Math.round(toNum(el.innerText) / scaleFactor);
-          } else {
-            rawC[field] = el.innerText.trim();
-          }
+          const scaleFactor = Math.max(1, eDay - sDay + 1) / getBaseDaysOfData(rawMonthData, currentLoadedYear, fullMonthNames.indexOf(currentLoadedMonth));
+          if (scaleFactor > 0 && field !== 'name') rawC[field] = Math.round(toNum(el.innerText) / scaleFactor);
+          else rawC[field] = el.innerText.trim();
         }
       }
 
@@ -1173,43 +942,36 @@
       c.regRr = calculateAutoRR(c.regMtd);
       c.usersRr = calculateAutoRR(c.usersMtd);
 
-      const imp = toNum(c.impMtd);
-      const clk = toNum(c.clicksMtd);
+      const imp = toNum(c.impMtd), clk = toNum(c.clicksMtd);
       c.ctr = imp > 0 ? ((clk / imp) * 100).toFixed(1) + '%' : '0.0%';
-
-      const reg = toNum(c.regMtd);
-      const usr = toNum(c.usersMtd);
+      const reg = toNum(c.regMtd), usr = toNum(c.usersMtd);
       c.s2p = reg > 0 ? ((usr / reg) * 100).toFixed(1) + '%' : '0.0%';
 
       distributeKpisToCampaigns();
       renderDashboard();
     }
 
-    function filterPlatform() {
-      const val = document.getElementById('platformFilter').value;
-      PLATFORMS.forEach(p => {
-        const sec = document.getElementById(`section_${p.key}`);
-        if (sec) sec.style.display = (val === 'all' || val === p.key) ? 'block' : 'none';
-      });
+    function handleTakeawayBlur(el, id, field) {
+      if (!isEditingAllowed()) { renderDashboard(); return; }
+      const c = (appData.campaigns || []).find(x => String(x.id) === String(id));
+      if (!c) return;
+      c[field] = el.innerText.trim();
+      if (rawMonthData && rawMonthData.campaigns) {
+        const rawC = rawMonthData.campaigns.find(x => (x.name || '').trim() === (c.name || '').trim());
+        if (rawC) rawC[field] = el.innerText.trim();
+      }
     }
 
     function renderDashboard() {
       if (!appData) return;
       const canEdit = isEditingAllowed();
 
-      // INDICADOR VISUAL DE MODO EN HEADER
       const editBadge = document.getElementById('editModeBadge');
       if (editBadge) {
-        if (canEdit) {
-          editBadge.className = 'px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200';
-          editBadge.innerText = 'Editable';
-        } else {
-          editBadge.className = 'px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200';
-          editBadge.innerText = 'View Only';
-        }
+        editBadge.className = canEdit ? 'px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200' : 'px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200';
+        editBadge.innerText = canEdit ? 'Editable' : 'View Only';
       }
 
-      // BOTÓN SAVE TO GIT: DESHABILITADO SI ESTÁ EN SOLO LECTURA
       const saveBtn = document.getElementById('saveGitBtn');
       if (saveBtn && !isSaveCooldown) {
         saveBtn.disabled = !canEdit;
@@ -1222,7 +984,6 @@
         }
       }
 
-      // TÍTULO DEL HEADER DE KPIS
       setTxt('tpKpiHeaderTitle', `KPIS ${canEdit ? '(CLICK TO EDIT TARGETS)' : '(LOCKED)'}`);
 
       const k = appData.kpis || {};
@@ -1249,7 +1010,7 @@
       setTxt('kpiTargetProfit', `KPI: $${toNum(k.profit).toLocaleString()}`);
 
       renderAllTables();
-      filterPlatform();
+      renderTakeawaysTables();
       syncGlobalSummaries();
       updateCharts();
       lucide.createIcons();
@@ -1339,7 +1100,6 @@
                       <td class="col-clicks font-mono ${canEdit ? 'editable-cell' : 'readonly-cell'}" contenteditable="${canEdit}" onkeydown="cellEnter(event,this)" onblur="handleCellBlur(this, '${c.id}', 'clicksKpi')">${toNum(c.clicksKpi).toLocaleString()}</td>
                       <td class="col-clicks font-mono font-bold ${canEdit ? 'editable-cell' : 'readonly-cell'}" contenteditable="${canEdit}" onkeydown="cellEnter(event,this)" onblur="handleCellBlur(this, '${c.id}', 'clicksMtd')">${toNum(c.clicksMtd).toLocaleString()}</td>
                       <td class="col-clicks font-mono readonly-cell ${getRrColorClass(c.clicksRr, c.clicksKpi)}">${toNum(c.clicksRr).toLocaleString()}</td>
-                      <!-- CTR AUTOMÁTICO Y READONLY -->
                       <td class="col-clicks font-mono font-bold readonly-cell">${c.ctr || '0.0%'}</td>
                       <td class="col-regs font-mono font-bold ${canEdit ? 'editable-cell' : 'readonly-cell'}" contenteditable="${canEdit}" onkeydown="cellEnter(event,this)" onblur="handleCellBlur(this, '${c.id}', 'regKpi')">${c.regKpi !== undefined ? toNum(c.regKpi).toLocaleString() : 0}</td>
                       <td class="col-regs font-mono font-bold ${canEdit ? 'editable-cell' : 'readonly-cell'}" contenteditable="${canEdit}" onkeydown="cellEnter(event,this)" onblur="handleCellBlur(this, '${c.id}', 'regMtd')">${toNum(c.regMtd).toLocaleString()}</td>
@@ -1388,7 +1148,70 @@
       });
     }
 
-    // SINCRONIZACIÓN DE TOTALES, CORRECCIÓN DE PROFIT Y COLORES
+    function renderTakeawaysTables() {
+      const container = document.getElementById('takeawaysContainer');
+      if (!container) return;
+      container.innerHTML = '';
+      const canEdit = isEditingAllowed();
+
+      PLATFORMS.forEach(p => {
+        const camps = (appData.campaigns || []).filter(c => (c.platform || '').toLowerCase() === p.key);
+
+        const card = document.createElement('div');
+        card.id = `section_takeaway_${p.key}`;
+        card.className = 'space-y-2';
+        card.innerHTML = `
+          <div class="flex items-center justify-between flex-wrap gap-2">
+            <div class="flex items-center gap-2.5">
+              <span class="w-7 h-7 rounded-lg ${p.bg} flex items-center justify-center shadow-xs">${p.icon}</span>
+              <h2 class="text-base font-bold font-display text-slate-900">${p.title} — Performance Take Aways</h2>
+            </div>
+            <div class="flex items-center gap-2 text-xs font-bold">
+              <span class="text-slate-600 bg-slate-100 px-2.5 py-1 rounded-md border border-slate-200">${camps.length} Campaigns</span>
+              ${canEdit ? `
+                <span class="text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-md border border-emerald-200 flex items-center gap-1">
+                  <i data-lucide="edit-3" class="w-3 h-3"></i><span>Editable</span>
+                </span>
+              ` : `
+                <span class="text-[11px] font-bold text-slate-500 bg-slate-100 px-2.5 py-1 rounded-md border border-slate-200 flex items-center gap-1">
+                  <i data-lucide="lock" class="w-3 h-3"></i><span>View Only</span>
+                </span>
+              `}
+            </div>
+          </div>
+          <div class="glass-card rounded-xl overflow-hidden">
+            <div class="overflow-x-auto custom-scrollbar">
+              <table class="master-table min-w-[900px] w-full text-left">
+                <thead>
+                  <tr>
+                    <th class="bg-white sticky-col font-extrabold text-slate-900 text-center" style="width: 240px; min-width: 220px;">
+                      Campaign<br><span class="text-[10px] font-bold text-slate-700">Name</span>
+                    </th>
+                    <th class="bg-[#D9D9D9] font-extrabold text-slate-900 text-center py-2.5 px-3" style="width: 33%;">Performance Take Aways</th>
+                    <th class="bg-[#D9D9D9] font-extrabold text-slate-900 text-center py-2.5 px-3" style="width: 33%;">Lessons Learned</th>
+                    <th class="bg-[#D9D9D9] font-extrabold text-slate-900 text-center py-2.5 px-3" style="width: 33%;">What can be improved</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${camps.length === 0 ? `<tr><td colspan="4" class="text-center py-5 text-slate-400">No campaigns for this platform</td></tr>` : camps.map(c => `
+                    <tr class="hover:bg-slate-50/70 transition-colors">
+                      <td class="font-bold sticky-col ${c.highlight ? 'bg-[#CFE2F3]' : 'bg-white'} p-2 text-center align-top border-r border-slate-300">
+                        <span class="font-bold text-slate-900 block truncate" title="${c.name}">${c.name}</span>
+                      </td>
+                      <td class="bg-white text-slate-800 text-left align-top p-2 text-xs border-r border-slate-300 ${canEdit ? 'editable-cell focus:ring-1 focus:ring-blue-500' : 'readonly-cell'}" contenteditable="${canEdit}" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();this.blur();}" onblur="handleTakeawayBlur(this, '${c.id}', 'takeaways')">${c.takeaways || ''}</td>
+                      <td class="bg-white text-slate-800 text-left align-top p-2 text-xs border-r border-slate-300 ${canEdit ? 'editable-cell focus:ring-1 focus:ring-blue-500' : 'readonly-cell'}" contenteditable="${canEdit}" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();this.blur();}" onblur="handleTakeawayBlur(this, '${c.id}', 'lessons')">${c.lessons || ''}</td>
+                      <td class="bg-white text-slate-800 text-left align-top p-2 text-xs border-r border-slate-300 ${canEdit ? 'editable-cell focus:ring-1 focus:ring-blue-500' : 'readonly-cell'}" contenteditable="${canEdit}" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();this.blur();}" onblur="handleTakeawayBlur(this, '${c.id}', 'improvements')">${c.improvements || ''}</td>
+                    </tr>
+                  `).join('')}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
     function syncGlobalSummaries() {
       const all = appData.campaigns || [];
       const sum = f => all.reduce((s, c) => s + toNum(c[f]), 0);
@@ -1401,10 +1224,7 @@
       const totRRUsers = sum('usersRr');
       const totRev = sum('revenue');
 
-      // PROFIT MTD REAL = Revenue Total - Spent Total
       const totProf = totRev - totSpent;
-
-      // RUN-RATE DE PROFIT = RR Revenue - RR Spent
       const totRrRev = calculateAutoRR(totRev);
       const totProfRr = totRrRev - totRRB;
 
@@ -1423,7 +1243,6 @@
       setTxt('tpRrRevenue', `$${Math.round(totRrRev).toLocaleString()}`);
       setTxt('tpRrProfit', fmtMoney(totProfRr));
 
-      // Color dinámico RR vs KPI en Team Performance (Verde si RR >= KPI, Rojo si no)
       const setRrColor = (id, rrVal, kpiVal) => {
         const el = document.getElementById(id);
         if (!el) return;
@@ -1438,19 +1257,16 @@
       setRrColor('tpRrRevenue', totRrRev, k.revenue);
       setRrColor('tpRrProfit', totProfRr, k.profit);
 
-      // Ratio ROAS (1:X)
       const spendVal = toNum(totRRB) > 0 ? toNum(totRRB) : toNum(totSpent);
       const revVal = toNum(totRrRev) > 0 ? toNum(totRrRev) : toNum(totRev);
       const ratioVal = spendVal > 0 ? (revVal / spendVal).toFixed(1) : '0.4';
       setTxt('tpRoiRatio', `1:${ratioVal}`);
 
-      // CARDS PRINCIPALES
       setTxt('kpiBudget', `$${Math.round(totSpent).toLocaleString()}`);
       setTxt('kpiSignups', totSign.toLocaleString());
       setTxt('kpiFtd', totUsers.toLocaleString());
       setTxt('kpiRevenue', `$${Math.round(totRev).toLocaleString()}`);
 
-      // PROFIT CARD: Rojo si es negativo, Verde si no
       setTxt('kpiProfit', fmtMoney(totProf));
       const kpiProfitEl = document.getElementById('kpiProfit');
       if (kpiProfitEl) {
@@ -1464,8 +1280,7 @@
           const numVal = toNum(v);
           const isOk = (numVal >= toNum(target) && toNum(target) > 0);
           el.className = `text-[11px] font-extrabold px-2 py-0.5 rounded border ${isOk ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-rose-50 text-rose-600 border-rose-200'}`;
-          const formatted = isCurrency ? fmtMoney(numVal) : Math.round(numVal).toLocaleString();
-          el.innerText = `RR: ${formatted}`;
+          el.innerText = `RR: ${isCurrency ? fmtMoney(numVal) : Math.round(numVal).toLocaleString()}`;
         }
       };
 
