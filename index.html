@@ -1028,6 +1028,7 @@
           }
         });
 
+        // Si no hay desglose diario en el JSON, cargamos el desglose MTD como referencia de distribución
         if (!hasDailyBreakdown) {
           const mtdRows = m.esp_ip_breakdown?.by_row || m.esp_mtd_totals || [];
           mtdRows.forEach(item => {
@@ -1181,11 +1182,47 @@
       renderEspIpBreakdown(cachedDetailedBreakdownRows);
     }
 
+    // Algoritmo de asignación exacta (reparte totalAmount de forma exacta sin generar decimales ni perder restos)
+    function allocateExact(items, totalAmount, getWeight, setter) {
+      if (!items || items.length === 0) return;
+      if (totalAmount <= 0) {
+        items.forEach(it => setter(it, 0));
+        return;
+      }
+      if (items.length === 1) {
+        setter(items[0], totalAmount);
+        return;
+      }
+
+      const eligible = items.filter(it => (getWeight(it) || 0) > 0);
+      const targets = eligible.length > 0 ? eligible : items;
+
+      const weights = targets.map(it => Math.max(0, getWeight(it) || 0));
+      let sumW = weights.reduce((a, b) => a + b, 0);
+
+      const finalWeights = (sumW <= 0) ? targets.map(() => 1) : weights;
+      sumW = finalWeights.reduce((a, b) => a + b, 0);
+
+      const quotas = finalWeights.map(w => (w / sumW) * totalAmount);
+      const ints = quotas.map(q => Math.floor(q));
+      let remainder = totalAmount - ints.reduce((a, b) => a + b, 0);
+
+      const rems = quotas.map((q, idx) => ({ idx, rem: q - Math.floor(q) }));
+      rems.sort((a, b) => b.rem - a.rem);
+
+      for (let i = 0; i < remainder; i++) {
+        ints[rems[i].idx]++;
+      }
+
+      items.forEach(it => setter(it, 0));
+      targets.forEach((it, idx) => setter(it, ints[idx]));
+    }
+
     async function updateDashboardForDateRange() {
       const agg = aggregateJsonData(currentStartDate, currentEndDate);
       const csvMap = await aggregateCsvForRange(currentStartDate, currentEndDate);
 
-      // Lista de ESPs activas reales (que enviaron correos en este rango)
+      // Lista de ESPs activas reales en este rango
       const espList = Object.values(csvMap)
         .filter(e => !isExcludedEsp(e.esp) && ((e.delivered || 0) > 0 || (e.clicked || 0) > 0))
         .sort((a, b) => (b.clicked * 10 + b.delivered) - (a.clicked * 10 + a.delivered));
@@ -1194,7 +1231,7 @@
         ? espList.map(e => e.esp)
         : ['SEG (Sendgrid) IP 2 / SH', 'SEG (Sendgrid) IP 1', 'MLJ (Mailjet) IP 2', 'MLJ (Mailjet) IP 1'];
 
-      // 1. Mapear las filas existentes en breakdownByEsp respetando sus números originales
+      // 1. Mapear todas las filas existentes en breakdownByEsp
       const breakdownByEsp = {};
       (agg.esp_ip_breakdown || []).forEach(r => {
         if (r.is_total || r.is_overall) return;
@@ -1215,44 +1252,40 @@
             brand: br,
             signups: 0,
             ftds: 0,
-            origSig: 0,
-            origFtd: 0
+            origSig: sig,
+            origFtd: ftd
           };
         }
-
-        breakdownByEsp[esp][key].signups += sig;
-        breakdownByEsp[esp][key].ftds += ftd;
-        breakdownByEsp[esp][key].origSig += sig;
-        breakdownByEsp[esp][key].origFtd += ftd;
       });
 
-      // Función de distribución por resto mayor (Largest Remainder Method)
-      const allocateDelta = (items, delta, getWeight, addVal) => {
-        if (delta <= 0 || !items || items.length === 0) return;
-        const eligible = items.filter(it => (getWeight(it) || 0) > 0);
-        if (eligible.length === 0) return;
+      // Asegurar que la suma de agg.brands cuadre exactamente con agg.signups y agg.users
+      const bKeys = Object.keys(agg.brands);
+      if (bKeys.length > 0) {
+        let bSumSig = 0, bSumUsers = 0;
+        bKeys.forEach(k => {
+          bSumSig += agg.brands[k].signups || 0;
+          bSumUsers += agg.brands[k].users || 0;
+        });
 
-        let totalW = eligible.reduce((s, it) => s + getWeight(it), 0);
-        if (totalW <= 0) return;
+        // Si hay una discrepancia leve por redondeos, se absorbe en la marca de mayor volumen
+        const mainBrandKey = bKeys.sort((a, b) => (agg.brands[b].signups || 0) - (agg.brands[a].signups || 0))[0];
+        if (agg.signups !== bSumSig) {
+          agg.brands[mainBrandKey].signups = Math.max(0, (agg.brands[mainBrandKey].signups || 0) + (agg.signups - bSumSig));
+        }
+        if (agg.users !== bSumUsers) {
+          agg.brands[mainBrandKey].users = Math.max(0, (agg.brands[mainBrandKey].users || 0) + (agg.users - bSumUsers));
+        }
+      }
 
-        const weights = eligible.map(it => getWeight(it) / totalW);
-        const quotas = weights.map(w => delta * w);
-        const ints = quotas.map(q => Math.floor(q));
-        let leftover = delta - ints.reduce((a, b) => a + b, 0);
-        const rems = quotas.map((q, idx) => ({ idx, r: q - Math.floor(q) }));
-        rems.sort((a, b) => b.r - a.r);
-        for (let i = 0; i < leftover; i++) ints[rems[i].idx]++;
-        eligible.forEach((it, idx) => addVal(it, ints[idx]));
-      };
-
-      // 2. RECONCILIACIÓN ROBUSTA CON FALLBACK INTELIGENTE (Solución de coincidencia exacta)
+      // 2. RECONCILIACIÓN EXACTA Y BIDIRECCIONAL POR MARCA
+      const processedBrands = new Set();
       let unassignedRotation = 0;
+
       Object.entries(agg.brands).forEach(([bName, bData]) => {
         const targetSig = bData.signups || 0;
         const targetFtd = bData.users || 0;
         const adv = bData.advertiser || '-';
-
-        if (targetSig === 0 && targetFtd === 0) return;
+        processedBrands.add(bName.toLowerCase());
 
         const matching = [];
         Object.entries(breakdownByEsp).forEach(([esp, group]) => {
@@ -1263,83 +1296,49 @@
           });
         });
 
-        if (matching.length > 0) {
-          const curSig = matching.reduce((s, it) => s + (it.signups || 0), 0);
-          const curFtd = matching.reduce((s, it) => s + (it.ftds || 0), 0);
-
-          // RECONCILIACIÓN DE SIGNUPS
-          if (targetSig > curSig) {
-            const deltaSig = targetSig - curSig;
-            const sigEligible = matching.filter(it => (it.origSig || 0) > 0);
-            if (sigEligible.length > 0) {
-              allocateDelta(sigEligible, deltaSig, it => it.origSig, (it, val) => { it.signups += val; });
-            } else {
-              // Fallback: Si todos venían en 0 en ese periodo, repartir entre todas las filas de la marca
-              allocateDelta(matching, deltaSig, () => 1, (it, val) => { it.signups += val; });
-            }
-          } else if (targetSig < curSig && curSig > 0) {
-            // Si el desglose superaba la marca, ajustar para que cuadre exacto
-            const factor = targetSig / curSig;
-            let runningSig = 0;
-            matching.forEach((it, idx) => {
-              if (idx === matching.length - 1) {
-                it.signups = Math.max(0, targetSig - runningSig);
-              } else {
-                it.signups = Math.round(it.signups * factor);
-                runningSig += it.signups;
-              }
-            });
-          }
-
-          // RECONCILIACIÓN DE FTDS / USERS
-          if (targetFtd > curFtd) {
-            const deltaFtd = targetFtd - curFtd;
-            const ftdEligible = matching.filter(it => (it.origFtd || 0) > 0);
-            if (ftdEligible.length > 0) {
-              allocateDelta(ftdEligible, deltaFtd, it => it.origFtd, (it, val) => { it.ftds += val; });
-            } else {
-              // Fallback 1: Si no había FTDs registrados originalmente, repartir donde hubo SIGNUPS
-              const sigHolders = matching.filter(it => (it.signups || 0) > 0);
-              if (sigHolders.length > 0) {
-                allocateDelta(sigHolders, deltaFtd, it => it.signups, (it, val) => { it.ftds += val; });
-              } else {
-                // Fallback 2: Repartir equitativamente entre las filas de la marca
-                allocateDelta(matching, deltaFtd, () => 1, (it, val) => { it.ftds += val; });
-              }
-            }
-          } else if (targetFtd < curFtd && curFtd > 0) {
-            // Ajustar hacia abajo si el desglose superaba la marca
-            const factor = targetFtd / curFtd;
-            let runningFtd = 0;
-            matching.forEach((it, idx) => {
-              if (idx === matching.length - 1) {
-                it.ftds = Math.max(0, targetFtd - runningFtd);
-              } else {
-                it.ftds = Math.round(it.ftds * factor);
-                runningFtd += it.ftds;
-              }
-            });
-          }
-        } else {
-          // Marcas que no estaban en el desglose diario (ej. CardCrush) se asignan a IPs activas
+        if (matching.length === 0 && (targetSig > 0 || targetFtd > 0)) {
           const chosenEsp = activeEsps[unassignedRotation % activeEsps.length];
           unassignedRotation++;
 
           if (!breakdownByEsp[chosenEsp]) breakdownByEsp[chosenEsp] = {};
           const key = `${adv}___${bName}`;
-          breakdownByEsp[chosenEsp][key] = {
+          const newRow = {
             esp_ip: chosenEsp,
             advertiser: adv,
             brand: bName,
-            signups: targetSig,
-            ftds: targetFtd,
+            signups: 0,
+            ftds: 0,
             origSig: targetSig,
             origFtd: targetFtd
           };
+          breakdownByEsp[chosenEsp][key] = newRow;
+          matching.push(newRow);
         }
+
+        // Asignación exacta de Registros a esta marca
+        allocateExact(matching, targetSig, it => it.origSig, (it, val) => { it.signups = val; });
+
+        // Asignación exacta de FTDs a esta marca (con preferencia a filas con Signups)
+        const hasOrigFtds = matching.some(it => (it.origFtd || 0) > 0);
+        allocateExact(
+          matching,
+          targetFtd,
+          it => hasOrigFtds ? (it.origFtd || 0) : (it.signups || 0),
+          (it, val) => { it.ftds = val; }
+        );
       });
 
-      // 3. Reconstruir filas detalladas de la tabla ESP / IP Breakdown
+      // Limpiar a 0 cualquier marca que haya venido del MTD pero que en este filtro tenga 0
+      Object.values(breakdownByEsp).forEach(group => {
+        Object.values(group).forEach(item => {
+          if (!processedBrands.has(item.brand.toLowerCase())) {
+            item.signups = 0;
+            item.ftds = 0;
+          }
+        });
+      });
+
+      // 3. Reconstruir filas de la tabla ESP / IP Breakdown
       const sortOrder = ['MLJ (Mailjet) IP 1', 'MLJ (Mailjet) IP 2', 'MLJ (Mailjet) IP 3 / SH', 'SEG (Sendgrid) IP 1', 'SEG (Sendgrid) IP 2 / SH'];
       const allKnownEsps = Array.from(new Set([...sortOrder, ...Object.keys(breakdownByEsp)])).filter(e => !isExcludedEsp(e));
 
