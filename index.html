@@ -1194,7 +1194,7 @@
         ? espList.map(e => e.esp)
         : ['SEG (Sendgrid) IP 2 / SH', 'SEG (Sendgrid) IP 1', 'MLJ (Mailjet) IP 2', 'MLJ (Mailjet) IP 1'];
 
-      // 1. Mapear las filas existentes en breakdownByEsp RESPETANDO EXACTAMENTE sus números originales
+      // 1. Mapear las filas existentes en breakdownByEsp respetando sus números originales
       const breakdownByEsp = {};
       (agg.esp_ip_breakdown || []).forEach(r => {
         if (r.is_total || r.is_overall) return;
@@ -1220,14 +1220,13 @@
           };
         }
 
-        // Si ya venía con números en el JSON, se respetan tal cual (incluso si la IP tiene 0 en envíos)
         breakdownByEsp[esp][key].signups += sig;
         breakdownByEsp[esp][key].ftds += ftd;
         breakdownByEsp[esp][key].origSig += sig;
         breakdownByEsp[esp][key].origFtd += ftd;
       });
 
-      // Función de distribución por resto mayor
+      // Función de distribución por resto mayor (Largest Remainder Method)
       const allocateDelta = (items, delta, getWeight, addVal) => {
         if (delta <= 0 || !items || items.length === 0) return;
         const eligible = items.filter(it => (getWeight(it) || 0) > 0);
@@ -1246,7 +1245,7 @@
         eligible.forEach((it, idx) => addVal(it, ints[idx]));
       };
 
-      // 2. RECONCILIACIÓN ESTRICTA: SOLO ASIGNAR DELTAS A LOS QUE ORIGINARIAMENTE SEAN > 0
+      // 2. RECONCILIACIÓN ROBUSTA CON FALLBACK INTELIGENTE (Solución de coincidencia exacta)
       let unassignedRotation = 0;
       Object.entries(agg.brands).forEach(([bName, bData]) => {
         const targetSig = bData.signups || 0;
@@ -1268,27 +1267,61 @@
           const curSig = matching.reduce((s, it) => s + (it.signups || 0), 0);
           const curFtd = matching.reduce((s, it) => s + (it.ftds || 0), 0);
 
-          // REGLA: Si falta signups, SOLO se distribuye entre filas con origSig > 0.
-          // A las filas que venían en 0, NO se les asigna nada.
+          // RECONCILIACIÓN DE SIGNUPS
           if (targetSig > curSig) {
             const deltaSig = targetSig - curSig;
             const sigEligible = matching.filter(it => (it.origSig || 0) > 0);
             if (sigEligible.length > 0) {
               allocateDelta(sigEligible, deltaSig, it => it.origSig, (it, val) => { it.signups += val; });
+            } else {
+              // Fallback: Si todos venían en 0 en ese periodo, repartir entre todas las filas de la marca
+              allocateDelta(matching, deltaSig, () => 1, (it, val) => { it.signups += val; });
             }
+          } else if (targetSig < curSig && curSig > 0) {
+            // Si el desglose superaba la marca, ajustar para que cuadre exacto
+            const factor = targetSig / curSig;
+            let runningSig = 0;
+            matching.forEach((it, idx) => {
+              if (idx === matching.length - 1) {
+                it.signups = Math.max(0, targetSig - runningSig);
+              } else {
+                it.signups = Math.round(it.signups * factor);
+                runningSig += it.signups;
+              }
+            });
           }
 
-          // REGLA: Si falta FTDs, SOLO se distribuye entre filas con origFtd > 0.
-          // A las filas que venían en 0, NO se les asigna nada.
+          // RECONCILIACIÓN DE FTDS / USERS
           if (targetFtd > curFtd) {
             const deltaFtd = targetFtd - curFtd;
             const ftdEligible = matching.filter(it => (it.origFtd || 0) > 0);
             if (ftdEligible.length > 0) {
               allocateDelta(ftdEligible, deltaFtd, it => it.origFtd, (it, val) => { it.ftds += val; });
+            } else {
+              // Fallback 1: Si no había FTDs registrados originalmente, repartir donde hubo SIGNUPS
+              const sigHolders = matching.filter(it => (it.signups || 0) > 0);
+              if (sigHolders.length > 0) {
+                allocateDelta(sigHolders, deltaFtd, it => it.signups, (it, val) => { it.ftds += val; });
+              } else {
+                // Fallback 2: Repartir equitativamente entre las filas de la marca
+                allocateDelta(matching, deltaFtd, () => 1, (it, val) => { it.ftds += val; });
+              }
             }
+          } else if (targetFtd < curFtd && curFtd > 0) {
+            // Ajustar hacia abajo si el desglose superaba la marca
+            const factor = targetFtd / curFtd;
+            let runningFtd = 0;
+            matching.forEach((it, idx) => {
+              if (idx === matching.length - 1) {
+                it.ftds = Math.max(0, targetFtd - runningFtd);
+              } else {
+                it.ftds = Math.round(it.ftds * factor);
+                runningFtd += it.ftds;
+              }
+            });
           }
         } else {
-          // Marcas completas que no estaban en el desglose diario (ej. CardCrush) se asignan a IPs activas
+          // Marcas que no estaban en el desglose diario (ej. CardCrush) se asignan a IPs activas
           const chosenEsp = activeEsps[unassignedRotation % activeEsps.length];
           unassignedRotation++;
 
@@ -1315,7 +1348,6 @@
 
       allKnownEsps.forEach(espName => {
         const group = breakdownByEsp[espName] || {};
-        // Mostrar cualquier fila que tenga Signups > 0 o FTDs > 0 (incluyendo IPs con volumen 0 si ya venían con conversiones)
         const items = Object.values(group).filter(it => (it.signups || 0) > 0 || (it.ftds || 0) > 0);
         if (items.length === 0) return;
 
@@ -1366,7 +1398,6 @@
         }
       });
 
-      // Asegurar que todas las ESPs conocidas existan en csvMap para que se muestren en la tabla aunque tengan 0
       sortOrder.forEach(espName => {
         if (!csvMap[espName]) {
           csvMap[espName] = {
@@ -1379,7 +1410,6 @@
       Object.values(csvMap).forEach(item => {
         if (!isExcludedEsp(item.esp)) {
           const bd = espTotalsFromBreakdown[item.esp] || { signups: 0, ftds: 0 };
-          // Respetar exactamente lo que reportó el desglose (no poner en 0 si ya traía conversiones reales)
           item.signups = bd.signups || 0;
           item.players = bd.ftds || 0;
         }
@@ -1392,7 +1422,6 @@
         return (idxA !== -1 ? idxA : 99) - (idxB !== -1 ? idxB : 99);
       });
 
-      // NO ocultar las IPs con 0: mostrar todas las conocidas
       agg.esp = list;
 
       ['delivered', 'softBounce', 'hardBounce', 'bounced', 'opened', 'clicked', 'unsub'].forEach(k => {
