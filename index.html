@@ -980,7 +980,7 @@
           espIpMap[espIp] = { items: {}, order: [] };
         }
         if (!espIpMap[espIp].items[key]) {
-          espIpMap[espIp].items[key] = { esp_ip: espIp, advertiser: adv, brand: br, signups: 0, ftds: 0 };
+          espIpMap[espIp] = { esp_ip: espIp, advertiser: adv, brand: br, signups: 0, ftds: 0 };
           espIpMap[espIp].order.push(key);
         }
         espIpMap[espIp].items[key].signups += (sig || 0);
@@ -1183,28 +1183,36 @@
       renderEspIpBreakdown(cachedDetailedBreakdownRows);
     }
 
-    // Algoritmo de asignación exacta (reparte totalAmount de forma exacta sin generar decimales ni perder restos)
+    // Algoritmo de asignación exacta (SOLO asigna a items con peso > 0. Si venían con 0, NUNCA reciben nada)
     function allocateExact(items, totalAmount, getWeight, setter) {
       if (!items || items.length === 0) return;
       if (totalAmount <= 0) {
         items.forEach(it => setter(it, 0));
         return;
       }
-      if (items.length === 1) {
-        setter(items[0], totalAmount);
+
+      // REGLA ESTRICTA: Filtrar ÚNICAMENTE elementos que tengan peso > 0
+      const targets = items.filter(it => (getWeight(it) || 0) > 0);
+      if (targets.length === 0) {
+        // Si ninguno tiene > 0, todos se quedan estrictamente en 0
+        items.forEach(it => setter(it, 0));
         return;
       }
 
-      const eligible = items.filter(it => (getWeight(it) || 0) > 0);
-      const targets = eligible.length > 0 ? eligible : items;
+      if (targets.length === 1) {
+        items.forEach(it => setter(it, 0));
+        setter(targets[0], totalAmount);
+        return;
+      }
 
       const weights = targets.map(it => Math.max(0, getWeight(it) || 0));
-      let sumW = weights.reduce((a, b) => a + b, 0);
+      const sumW = weights.reduce((a, b) => a + b, 0);
+      if (sumW <= 0) {
+        items.forEach(it => setter(it, 0));
+        return;
+      }
 
-      const finalWeights = (sumW <= 0) ? targets.map(() => 1) : weights;
-      sumW = finalWeights.reduce((a, b) => a + b, 0);
-
-      const quotas = finalWeights.map(w => (w / sumW) * totalAmount);
+      const quotas = weights.map(w => (w / sumW) * totalAmount);
       const ints = quotas.map(q => Math.floor(q));
       let remainder = totalAmount - ints.reduce((a, b) => a + b, 0);
 
@@ -1215,7 +1223,9 @@
         ints[rems[i].idx]++;
       }
 
+      // Los que tenían 0 se garantizan en 0
       items.forEach(it => setter(it, 0));
+      // Los targets reciben su cantidad asignada
       targets.forEach((it, idx) => setter(it, ints[idx]));
     }
 
@@ -1232,7 +1242,7 @@
         ? espList.map(e => e.esp)
         : ['SEG (Sendgrid) IP 2 / SH', 'SEG (Sendgrid) IP 1', 'MLJ (Mailjet) IP 2', 'MLJ (Mailjet) IP 1'];
 
-      // 1. Mapear todas las filas existentes en breakdownByEsp
+      // 1. Mapear todas las filas existentes en breakdownByEsp guardando su origSig y origFtd
       const breakdownByEsp = {};
       (agg.esp_ip_breakdown || []).forEach(r => {
         if (r.is_total || r.is_overall) return;
@@ -1259,8 +1269,7 @@
         }
       });
 
-      // 2. RECONCILIACIÓN ROBUSTA MULTI-MES CON NORMALIZACIÓN DE MARCAS
-      // Normalizar marcas para evitar que 'GAMETIME' en un mes pise a 'Gametime' en otro
+      // 2. RECONCILIACIÓN MULTI-MES CON NORMALIZACIÓN DE MARCAS
       const normalizedBrands = {};
       Object.entries(agg.brands).forEach(([bName, bData]) => {
         const cleanKey = bName.trim().toLowerCase();
@@ -1278,7 +1287,7 @@
         normalizedBrands[cleanKey].revenue += (bData.revenue || 0);
       });
 
-      // Asegurar que la suma de marcas normalizadas cubra el 100% de agg.signups y agg.users
+      // Balancear suma de marcas con los totales agg.signups y agg.users
       const normBrandKeys = Object.keys(normalizedBrands);
       if (normBrandKeys.length > 0) {
         let bSumSig = 0, bSumUsers = 0;
@@ -1315,6 +1324,7 @@
           });
         });
 
+        // Si la marca no existía en el desglose y tiene datos > 0, se le asigna a una IP activa
         if (matching.length === 0 && (targetSig > 0 || targetFtd > 0)) {
           const chosenEsp = activeEsps[unassignedRotation % activeEsps.length];
           unassignedRotation++;
@@ -1334,18 +1344,54 @@
           matching.push(newRow);
         }
 
-        allocateExact(matching, targetSig, it => it.origSig, (it, val) => { it.signups = val; });
+        // REGLA: Si vienen con 0 en origSig, NO se le agregan signups (peso = 0)
+        let sigEligible = matching.filter(it => (it.origSig || 0) > 0);
+        if (sigEligible.length === 0 && targetSig > 0) {
+          const chosenEsp = activeEsps[unassignedRotation % activeEsps.length];
+          unassignedRotation++;
+          let targetRow = matching.find(it => it.esp_ip === chosenEsp);
+          if (!targetRow) {
+            if (!breakdownByEsp[chosenEsp]) breakdownByEsp[chosenEsp] = {};
+            const key = `${adv}___${bName}`;
+            targetRow = {
+              esp_ip: chosenEsp,
+              advertiser: adv,
+              brand: bName,
+              signups: 0,
+              ftds: 0,
+              origSig: targetSig,
+              origFtd: targetFtd
+            };
+            breakdownByEsp[chosenEsp][key] = targetRow;
+            matching.push(targetRow);
+          } else {
+            targetRow.origSig = targetSig;
+          }
+          sigEligible = [targetRow];
+        }
 
-        const hasOrigFtds = matching.some(it => (it.origFtd || 0) > 0);
+        allocateExact(
+          matching,
+          targetSig,
+          it => ((it.origSig || 0) > 0 ? it.origSig : 0),
+          (it, val) => { it.signups = val; }
+        );
+
+        // REGLA: Si vienen con 0 signups, tampoco reciben FTDs/Users
+        const hasOrigFtds = matching.some(it => (it.origSig > 0) && ((it.origFtd || 0) > 0));
         allocateExact(
           matching,
           targetFtd,
-          it => hasOrigFtds ? (it.origFtd || 0) : (it.signups || 0),
+          it => {
+            if (!it.origSig || it.origSig <= 0) return 0; // Estrictamente 0 si origSig es 0
+            if (hasOrigFtds) return it.origFtd || 0;
+            return it.signups || 0;
+          },
           (it, val) => { it.ftds = val; }
         );
       });
 
-      // Limpiar a 0 marcas no presentes en este rango
+      // Limpiar marcas no presentes
       Object.values(breakdownByEsp).forEach(group => {
         Object.values(group).forEach(item => {
           if (!processedBrands.has(item.brand.toLowerCase())) {
@@ -1389,17 +1435,27 @@
         grandFtd += subFtd;
       });
 
-      // 4. CANDADO MAESTRO DE SEGURIDAD (Garantiza 0 discrepancia entre KPIs y Tablas en cualquier rango)
+      // 4. CANDADO MAESTRO DE SEGURIDAD (SOLO distribuye deltas en filas con origSig > 0 y signups > 0)
       if ((grandSig !== agg.signups || grandFtd !== agg.users) && newBreakdownRows.length > 0) {
-        const activeRows = newBreakdownRows.filter(r => !r.is_total && !r.is_overall);
+        const activeRows = newBreakdownRows.filter(r => !r.is_total && !r.is_overall && (r.origSig > 0 || r.signups > 0));
         if (activeRows.length > 0) {
           if (grandSig !== agg.signups) {
-            allocateExact(activeRows, agg.signups, it => it.signups || 1, (it, val) => { it.signups = val; });
+            allocateExact(
+              activeRows,
+              agg.signups,
+              it => ((it.origSig > 0 && it.signups > 0) ? it.signups : 0),
+              (it, val) => { it.signups = val; }
+            );
           }
           if (grandFtd !== agg.users) {
-            allocateExact(activeRows, agg.users, it => it.ftds || it.signups || 1, (it, val) => { it.ftds = val; });
+            allocateExact(
+              activeRows,
+              agg.users,
+              it => ((it.origSig > 0 && (it.ftds > 0 || it.signups > 0)) ? (it.ftds || it.signups) : 0),
+              (it, val) => { it.ftds = val; }
+            );
           }
-          // Recalcular subtotales por ESP
+          // Recalcular subtotales por ESP respetando el balance
           const espSums = {};
           activeRows.forEach(r => {
             if (!espSums[r.esp_ip]) espSums[r.esp_ip] = { signups: 0, ftds: 0 };
@@ -1409,10 +1465,8 @@
           newBreakdownRows.forEach(r => {
             if (r.is_total && !r.is_overall) {
               const espName = r.esp_ip.replace(/^GRAND TOTAL\s+/i, '').trim();
-              if (espSums[espName]) {
-                r.signups = espSums[espName].signups;
-                r.ftds = espSums[espName].ftds;
-              }
+              r.signups = espSums[espName] ? espSums[espName].signups : 0;
+              r.ftds = espSums[espName] ? espSums[espName].ftds : 0;
             }
           });
           grandSig = agg.signups;
