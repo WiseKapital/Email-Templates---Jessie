@@ -999,17 +999,19 @@
           agg.revenue += r.revenue || 0;
 
           Object.entries(r.advertisers || {}).forEach(([adv, v]) => {
-            if (!agg.advertisers[adv]) agg.advertisers[adv] = { signups: 0, users: 0, revenue: 0 };
-            agg.advertisers[adv].signups += v.signups || 0;
-            agg.advertisers[adv].users += v.users || 0;
-            agg.advertisers[adv].revenue += v.revenue || 0;
+            const cleanAdv = (adv || '-').trim();
+            if (!agg.advertisers[cleanAdv]) agg.advertisers[cleanAdv] = { signups: 0, users: 0, revenue: 0 };
+            agg.advertisers[cleanAdv].signups += v.signups || 0;
+            agg.advertisers[cleanAdv].users += v.users || 0;
+            agg.advertisers[cleanAdv].revenue += v.revenue || 0;
           });
 
           Object.entries(r.brands || {}).forEach(([br, v]) => {
-            if (!agg.brands[br]) agg.brands[br] = { advertiser: v.advertiser || '-', signups: 0, users: 0, revenue: 0 };
-            agg.brands[br].signups += v.signups || 0;
-            agg.brands[br].users += v.users || 0;
-            agg.brands[br].revenue += v.revenue || 0;
+            const cleanBr = (br || '-').trim();
+            if (!agg.brands[cleanBr]) agg.brands[cleanBr] = { advertiser: v.advertiser || '-', signups: 0, users: 0, revenue: 0 };
+            agg.brands[cleanBr].signups += v.signups || 0;
+            agg.brands[cleanBr].users += v.users || 0;
+            agg.brands[cleanBr].revenue += v.revenue || 0;
           });
 
           if (r.ops) {
@@ -1028,7 +1030,6 @@
           }
         });
 
-        // Si no hay desglose diario en el JSON, cargamos el desglose MTD como referencia de distribución
         if (!hasDailyBreakdown) {
           const mtdRows = m.esp_ip_breakdown?.by_row || m.esp_mtd_totals || [];
           mtdRows.forEach(item => {
@@ -1258,30 +1259,48 @@
         }
       });
 
-      // Asegurar que la suma de agg.brands cuadre exactamente con agg.signups y agg.users
-      const bKeys = Object.keys(agg.brands);
-      if (bKeys.length > 0) {
+      // 2. RECONCILIACIÓN ROBUSTA MULTI-MES CON NORMALIZACIÓN DE MARCAS
+      // Normalizar marcas para evitar que 'GAMETIME' en un mes pise a 'Gametime' en otro
+      const normalizedBrands = {};
+      Object.entries(agg.brands).forEach(([bName, bData]) => {
+        const cleanKey = bName.trim().toLowerCase();
+        if (!normalizedBrands[cleanKey]) {
+          normalizedBrands[cleanKey] = {
+            name: bName.trim(),
+            advertiser: (bData.advertiser || '-').trim(),
+            signups: 0,
+            users: 0,
+            revenue: 0
+          };
+        }
+        normalizedBrands[cleanKey].signups += (bData.signups || 0);
+        normalizedBrands[cleanKey].users += (bData.users || 0);
+        normalizedBrands[cleanKey].revenue += (bData.revenue || 0);
+      });
+
+      // Asegurar que la suma de marcas normalizadas cubra el 100% de agg.signups y agg.users
+      const normBrandKeys = Object.keys(normalizedBrands);
+      if (normBrandKeys.length > 0) {
         let bSumSig = 0, bSumUsers = 0;
-        bKeys.forEach(k => {
-          bSumSig += agg.brands[k].signups || 0;
-          bSumUsers += agg.brands[k].users || 0;
+        normBrandKeys.forEach(k => {
+          bSumSig += normalizedBrands[k].signups;
+          bSumUsers += normalizedBrands[k].users;
         });
 
-        // Si hay una discrepancia leve por redondeos, se absorbe en la marca de mayor volumen
-        const mainBrandKey = bKeys.sort((a, b) => (agg.brands[b].signups || 0) - (agg.brands[a].signups || 0))[0];
+        const mainBrandKey = normBrandKeys.sort((a, b) => normalizedBrands[b].signups - normalizedBrands[a].signups)[0];
         if (agg.signups !== bSumSig) {
-          agg.brands[mainBrandKey].signups = Math.max(0, (agg.brands[mainBrandKey].signups || 0) + (agg.signups - bSumSig));
+          normalizedBrands[mainBrandKey].signups = Math.max(0, normalizedBrands[mainBrandKey].signups + (agg.signups - bSumSig));
         }
         if (agg.users !== bSumUsers) {
-          agg.brands[mainBrandKey].users = Math.max(0, (agg.brands[mainBrandKey].users || 0) + (agg.users - bSumUsers));
+          normalizedBrands[mainBrandKey].users = Math.max(0, normalizedBrands[mainBrandKey].users + (agg.users - bSumUsers));
         }
       }
 
-      // 2. RECONCILIACIÓN EXACTA Y BIDIRECCIONAL POR MARCA
-      const processedBrands = new Set();
       let unassignedRotation = 0;
+      const processedBrands = new Set();
 
-      Object.entries(agg.brands).forEach(([bName, bData]) => {
+      Object.values(normalizedBrands).forEach(bData => {
+        const bName = bData.name;
         const targetSig = bData.signups || 0;
         const targetFtd = bData.users || 0;
         const adv = bData.advertiser || '-';
@@ -1315,10 +1334,8 @@
           matching.push(newRow);
         }
 
-        // Asignación exacta de Registros a esta marca
         allocateExact(matching, targetSig, it => it.origSig, (it, val) => { it.signups = val; });
 
-        // Asignación exacta de FTDs a esta marca (con preferencia a filas con Signups)
         const hasOrigFtds = matching.some(it => (it.origFtd || 0) > 0);
         allocateExact(
           matching,
@@ -1328,7 +1345,7 @@
         );
       });
 
-      // Limpiar a 0 cualquier marca que haya venido del MTD pero que en este filtro tenga 0
+      // Limpiar a 0 marcas no presentes en este rango
       Object.values(breakdownByEsp).forEach(group => {
         Object.values(group).forEach(item => {
           if (!processedBrands.has(item.brand.toLowerCase())) {
@@ -1372,6 +1389,37 @@
         grandFtd += subFtd;
       });
 
+      // 4. CANDADO MAESTRO DE SEGURIDAD (Garantiza 0 discrepancia entre KPIs y Tablas en cualquier rango)
+      if ((grandSig !== agg.signups || grandFtd !== agg.users) && newBreakdownRows.length > 0) {
+        const activeRows = newBreakdownRows.filter(r => !r.is_total && !r.is_overall);
+        if (activeRows.length > 0) {
+          if (grandSig !== agg.signups) {
+            allocateExact(activeRows, agg.signups, it => it.signups || 1, (it, val) => { it.signups = val; });
+          }
+          if (grandFtd !== agg.users) {
+            allocateExact(activeRows, agg.users, it => it.ftds || it.signups || 1, (it, val) => { it.ftds = val; });
+          }
+          // Recalcular subtotales por ESP
+          const espSums = {};
+          activeRows.forEach(r => {
+            if (!espSums[r.esp_ip]) espSums[r.esp_ip] = { signups: 0, ftds: 0 };
+            espSums[r.esp_ip].signups += (r.signups || 0);
+            espSums[r.esp_ip].ftds += (r.ftds || 0);
+          });
+          newBreakdownRows.forEach(r => {
+            if (r.is_total && !r.is_overall) {
+              const espName = r.esp_ip.replace(/^GRAND TOTAL\s+/i, '').trim();
+              if (espSums[espName]) {
+                r.signups = espSums[espName].signups;
+                r.ftds = espSums[espName].ftds;
+              }
+            }
+          });
+          grandSig = agg.signups;
+          grandFtd = agg.users;
+        }
+      }
+
       if (newBreakdownRows.length > 0) {
         newBreakdownRows.push({
           esp_ip: 'OVERALL GRAND TOTAL',
@@ -1386,7 +1434,7 @@
 
       agg.esp_ip_breakdown = newBreakdownRows;
 
-      // 4. Actualizar dinámicamente la tabla superior de ESP con los subtotales reconciliados
+      // 5. Actualizar dinámicamente la tabla superior de ESP con los subtotales reconciliados
       const espTotalsFromBreakdown = {};
       newBreakdownRows.forEach(r => {
         if (r.is_total && !r.is_overall) {
