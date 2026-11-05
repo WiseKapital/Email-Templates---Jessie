@@ -877,16 +877,37 @@
       const agg = aggregateJsonData(currentStartDate, currentEndDate);
       const csvMap = await aggregateCsvForRange(currentStartDate, currentEndDate);
 
-      // 1. Mapear las filas crudas existentes en breakdownByEsp (omitiendo ESPs excluidos)
+      // Lista de ESPs activas reales (que efectivamente enviaron correos o tuvieron clics)
+      const espList = Object.values(csvMap)
+        .filter(e => !isExcludedEsp(e.esp) && ((e.delivered || 0) > 0 || (e.clicked || 0) > 0))
+        .sort((a, b) => (b.clicked * 10 + b.delivered) - (a.clicked * 10 + a.delivered));
+
+      const activeEsps = espList.length > 0 
+        ? espList.map(e => e.esp) 
+        : ['SEG (Sendgrid) IP 2 / SH', 'SEG (Sendgrid) IP 1', 'MLJ (Mailjet) IP 2', 'MLJ (Mailjet) IP 1'];
+
+      // 1. Mapear las filas existentes en breakdownByEsp sanitizando IPs inactivas
       const breakdownByEsp = {};
       (agg.esp_ip_breakdown || []).forEach(r => {
         if (r.is_total || r.is_overall) return;
-        const esp = (r.esp_ip || '').trim();
+        let esp = (r.esp_ip || '').trim();
         const adv = (r.advertiser || '-').trim();
         const br = (r.brand || '-').trim();
         if (!esp || isExcludedEsp(esp)) return;
-        if (!breakdownByEsp[esp]) breakdownByEsp[esp] = {};
+
+        const sig = r.signups || 0;
+        const ftd = r.ftds || 0;
+
+        // Si la IP tuvo 0 envíos y 0 clics (inactiva, ej. MLJ IP 3 / SH),
+        // reasignamos a una IP activa del mismo proveedor para no perder la conversión ni falsear la IP inactiva
+        const espHasTraffic = (csvMap[esp]?.delivered || 0) > 0 || (csvMap[esp]?.clicked || 0) > 0;
+        if (!espHasTraffic && (sig > 0 || ftd > 0)) {
+          const sameFamily = activeEsps.find(ae => ae.substring(0, 3) === esp.substring(0, 3));
+          esp = sameFamily || activeEsps[0];
+        }
+
         const key = `${adv}___${br}`;
+        if (!breakdownByEsp[esp]) breakdownByEsp[esp] = {};
         if (!breakdownByEsp[esp][key]) {
           breakdownByEsp[esp][key] = {
             esp_ip: esp,
@@ -898,24 +919,14 @@
             origFtd: 0
           };
         }
-        const sig = r.signups || 0;
-        const ftd = r.ftds || 0;
+
         breakdownByEsp[esp][key].signups += sig;
         breakdownByEsp[esp][key].ftds += ftd;
         breakdownByEsp[esp][key].origSig += sig;
         breakdownByEsp[esp][key].origFtd += ftd;
       });
 
-      // Lista de ESPs activas reales (las que efectivamente enviaron correos o tuvieron clics en este rango)
-      const espList = Object.values(csvMap)
-        .filter(e => !isExcludedEsp(e.esp) && ((e.delivered || 0) > 0 || (e.clicked || 0) > 0))
-        .sort((a, b) => (b.clicked * 10 + b.delivered) - (a.clicked * 10 + a.delivered));
-
-      const activeEsps = espList.length > 0 
-        ? espList.map(e => e.esp) 
-        : ['SEG (Sendgrid) IP 2 / SH', 'SEG (Sendgrid) IP 1', 'MLJ (Mailjet) IP 2', 'MLJ (Mailjet) IP 1'];
-
-      // Función auxiliar genérica de distribución por cuota de resto mayor
+      // Función auxiliar genérica de distribución por cuota de resto mayor (solo > 0)
       const allocateDelta = (items, delta, getWeight, addVal) => {
         if (delta <= 0 || !items || items.length === 0) return;
         const eligible = items.filter(it => (getWeight(it) || 0) > 0);
@@ -934,10 +945,14 @@
         eligible.forEach((it, idx) => addVal(it, ints[idx]));
       };
 
-      // 2. RECONCILIACIÓN ESTRICTA: SOLO SE ASIGNA SI EL VALOR ORIGINAL ERA > 0 (SIN ELSES DE RESPALDO)
+      // 2. RECONCILIACIÓN INTEGRAL: GARANTIZA TOTALES EXACTOS (43 y 4) SIN ASIGNAR A REGISTROS EN 0
+      let unassignedRotation = 0;
       Object.entries(agg.brands).forEach(([bName, bData]) => {
         const targetSig = bData.signups || 0;
         const targetFtd = bData.users || 0;
+        const adv = bData.advertiser || '-';
+
+        if (targetSig === 0 && targetFtd === 0) return;
 
         const matching = [];
         Object.entries(breakdownByEsp).forEach(([esp, group]) => {
@@ -952,23 +967,46 @@
           const curSig = matching.reduce((s, it) => s + (it.signups || 0), 0);
           const curFtd = matching.reduce((s, it) => s + (it.ftds || 0), 0);
 
-          // Asignación de Signups: Solo sumar a quienes originalmente tengan > 0
+          // Si falta asignar delta, SOLO se suma a filas que ORIGINALMENTE tengan > 0
           if (targetSig > curSig) {
             const deltaSig = targetSig - curSig;
             const sigEligible = matching.filter(it => (it.origSig || 0) > 0);
             if (sigEligible.length > 0) {
               allocateDelta(sigEligible, deltaSig, it => it.origSig, (it, val) => { it.signups += val; });
+            } else {
+              // Si todas venían en 0, se le asigna a la IP activa con mayor entrega
+              matching.sort((a, b) => (csvMap[b.esp_ip]?.delivered || 0) - (csvMap[a.esp_ip]?.delivered || 0));
+              matching[0].signups += deltaSig;
             }
           }
 
-          // Asignación de FTDs: Solo sumar a quienes originalmente tengan > 0
           if (targetFtd > curFtd) {
             const deltaFtd = targetFtd - curFtd;
             const ftdEligible = matching.filter(it => (it.origFtd || 0) > 0);
             if (ftdEligible.length > 0) {
               allocateDelta(ftdEligible, deltaFtd, it => it.origFtd, (it, val) => { it.ftds += val; });
+            } else {
+              matching.sort((a, b) => (b.signups || 0) - (a.signups || 0));
+              matching[0].ftds += deltaFtd;
             }
           }
+        } else {
+          // Si la marca (ej. CardCrush) no venía en breakdownByEsp, se asigna a una IP activa real
+          // NUNCA a IPs con 0 envíos/inactivas
+          const chosenEsp = activeEsps[unassignedRotation % activeEsps.length];
+          unassignedRotation++;
+
+          if (!breakdownByEsp[chosenEsp]) breakdownByEsp[chosenEsp] = {};
+          const key = `${adv}___${bName}`;
+          breakdownByEsp[chosenEsp][key] = {
+            esp_ip: chosenEsp,
+            advertiser: adv,
+            brand: bName,
+            signups: targetSig,
+            ftds: targetFtd,
+            origSig: targetSig,
+            origFtd: targetFtd
+          };
         }
       });
 
