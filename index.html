@@ -980,7 +980,7 @@
           espIpMap[espIp] = { items: {}, order: [] };
         }
         if (!espIpMap[espIp].items[key]) {
-          espIpMap[espIp] = { esp_ip: espIp, advertiser: adv, brand: br, signups: 0, ftds: 0 };
+          espIpMap[espIp].items[key] = { esp_ip: espIp, advertiser: adv, brand: br, signups: 0, ftds: 0 };
           espIpMap[espIp].order.push(key);
         }
         espIpMap[espIp].items[key].signups += (sig || 0);
@@ -999,19 +999,17 @@
           agg.revenue += r.revenue || 0;
 
           Object.entries(r.advertisers || {}).forEach(([adv, v]) => {
-            const cleanAdv = (adv || '-').trim();
-            if (!agg.advertisers[cleanAdv]) agg.advertisers[cleanAdv] = { signups: 0, users: 0, revenue: 0 };
-            agg.advertisers[cleanAdv].signups += v.signups || 0;
-            agg.advertisers[cleanAdv].users += v.users || 0;
-            agg.advertisers[cleanAdv].revenue += v.revenue || 0;
+            if (!agg.advertisers[adv]) agg.advertisers[adv] = { signups: 0, users: 0, revenue: 0 };
+            agg.advertisers[adv].signups += v.signups || 0;
+            agg.advertisers[adv].users += v.users || 0;
+            agg.advertisers[adv].revenue += v.revenue || 0;
           });
 
           Object.entries(r.brands || {}).forEach(([br, v]) => {
-            const cleanBr = (br || '-').trim();
-            if (!agg.brands[cleanBr]) agg.brands[cleanBr] = { advertiser: (v.advertiser || '-').trim(), signups: 0, users: 0, revenue: 0 };
-            agg.brands[cleanBr].signups += v.signups || 0;
-            agg.brands[cleanBr].users += v.users || 0;
-            agg.brands[cleanBr].revenue += v.revenue || 0;
+            if (!agg.brands[br]) agg.brands[br] = { advertiser: v.advertiser || '-', signups: 0, users: 0, revenue: 0 };
+            agg.brands[br].signups += v.signups || 0;
+            agg.brands[br].users += v.users || 0;
+            agg.brands[br].revenue += v.revenue || 0;
           });
 
           if (r.ops) {
@@ -1030,6 +1028,7 @@
           }
         });
 
+        // Si no hay desglose diario en el JSON, cargamos el desglose MTD como referencia de distribución
         if (!hasDailyBreakdown) {
           const mtdRows = m.esp_ip_breakdown?.by_row || m.esp_mtd_totals || [];
           mtdRows.forEach(item => {
@@ -1086,11 +1085,10 @@
         if (!opsMtd) return;
         ['signups_by_advertiser', 'users_by_advertiser'].forEach(prop => {
           Object.entries(opsMtd[prop] || {}).forEach(([adv, v]) => {
-            const cleanAdv = (adv || '-').trim();
-            if (!agg.ops[prop][cleanAdv]) agg.ops[prop][cleanAdv] = { andrea: 0, jessie: 0, total: 0 };
-            agg.ops[prop][cleanAdv].andrea += v.andrea || 0;
-            agg.ops[prop][cleanAdv].jessie += v.jessie || 0;
-            agg.ops[prop][cleanAdv].total += (v.andrea || 0) + (v.jessie || 0);
+            if (!agg.ops[prop][adv]) agg.ops[prop][adv] = { andrea: 0, jessie: 0, total: 0 };
+            agg.ops[prop][adv].andrea += v.andrea || 0;
+            agg.ops[prop][adv].jessie += v.jessie || 0;
+            agg.ops[prop][adv].total += (v.andrea || 0) + (v.jessie || 0);
           });
         });
       });
@@ -1184,31 +1182,7 @@
       renderEspIpBreakdown(cachedDetailedBreakdownRows);
     }
 
-    // Algoritmo de cuota exacta (resto mayor)
-    function allocateDelta(items, delta, getWeight, addVal) {
-      if (delta <= 0 || !items || items.length === 0) return;
-      const eligible = items.filter(it => (getWeight(it) || 0) > 0);
-      const targets = eligible.length > 0 ? eligible : items;
-
-      const weights = targets.map(it => Math.max(0, getWeight(it) || 0));
-      let sumW = weights.reduce((a, b) => a + b, 0);
-      const finalWeights = (sumW <= 0) ? targets.map(() => 1) : weights;
-      sumW = finalWeights.reduce((a, b) => a + b, 0);
-
-      const quotas = finalWeights.map(w => (w / sumW) * delta);
-      const ints = quotas.map(q => Math.floor(q));
-      let leftover = delta - ints.reduce((a, b) => a + b, 0);
-
-      const rems = quotas.map((q, idx) => ({ idx, rem: q - Math.floor(q) }));
-      rems.sort((a, b) => b.rem - a.rem);
-
-      for (let i = 0; i < leftover; i++) {
-        ints[rems[i].idx]++;
-      }
-
-      targets.forEach((it, idx) => addVal(it, ints[idx]));
-    }
-
+    // Algoritmo de asignación exacta (reparte totalAmount de forma exacta sin generar decimales ni perder restos)
     function allocateExact(items, totalAmount, getWeight, setter) {
       if (!items || items.length === 0) return;
       if (totalAmount <= 0) {
@@ -1225,6 +1199,7 @@
 
       const weights = targets.map(it => Math.max(0, getWeight(it) || 0));
       let sumW = weights.reduce((a, b) => a + b, 0);
+
       const finalWeights = (sumW <= 0) ? targets.map(() => 1) : weights;
       sumW = finalWeights.reduce((a, b) => a + b, 0);
 
@@ -1247,6 +1222,7 @@
       const agg = aggregateJsonData(currentStartDate, currentEndDate);
       const csvMap = await aggregateCsvForRange(currentStartDate, currentEndDate);
 
+      // Lista de ESPs activas reales en este rango
       const espList = Object.values(csvMap)
         .filter(e => !isExcludedEsp(e.esp) && ((e.delivered || 0) > 0 || (e.clicked || 0) > 0))
         .sort((a, b) => (b.clicked * 10 + b.delivered) - (a.clicked * 10 + a.delivered));
@@ -1282,7 +1258,7 @@
         }
       });
 
-      // Asegurar que la suma de brands cuadre con agg.signups y agg.users
+      // Asegurar que la suma de agg.brands cuadre exactamente con agg.signups y agg.users
       const bKeys = Object.keys(agg.brands);
       if (bKeys.length > 0) {
         let bSumSig = 0, bSumUsers = 0;
@@ -1291,8 +1267,8 @@
           bSumUsers += agg.brands[k].users || 0;
         });
 
-        const sortedKeys = [...bKeys].sort((a, b) => (agg.brands[b].signups || 0) - (agg.brands[a].signups || 0));
-        const mainBrandKey = sortedKeys[0];
+        // Si hay una discrepancia leve por redondeos, se absorbe en la marca de mayor volumen
+        const mainBrandKey = bKeys.sort((a, b) => (agg.brands[b].signups || 0) - (agg.brands[a].signups || 0))[0];
         if (agg.signups !== bSumSig) {
           agg.brands[mainBrandKey].signups = Math.max(0, (agg.brands[mainBrandKey].signups || 0) + (agg.signups - bSumSig));
         }
@@ -1301,7 +1277,7 @@
         }
       }
 
-      // 2. RECONCILIACIÓN POR MARCA
+      // 2. RECONCILIACIÓN EXACTA Y BIDIRECCIONAL POR MARCA
       const processedBrands = new Set();
       let unassignedRotation = 0;
 
@@ -1339,8 +1315,10 @@
           matching.push(newRow);
         }
 
+        // Asignación exacta de Registros a esta marca
         allocateExact(matching, targetSig, it => it.origSig, (it, val) => { it.signups = val; });
 
+        // Asignación exacta de FTDs a esta marca (con preferencia a filas con Signups)
         const hasOrigFtds = matching.some(it => (it.origFtd || 0) > 0);
         allocateExact(
           matching,
@@ -1350,7 +1328,7 @@
         );
       });
 
-      // Limpiar marcas fuera del filtro
+      // Limpiar a 0 cualquier marca que haya venido del MTD pero que en este filtro tenga 0
       Object.values(breakdownByEsp).forEach(group => {
         Object.values(group).forEach(item => {
           if (!processedBrands.has(item.brand.toLowerCase())) {
@@ -1360,55 +1338,28 @@
         });
       });
 
-      // 3. Reconstruir filas detalladas preliminares
+      // 3. Reconstruir filas de la tabla ESP / IP Breakdown
       const sortOrder = ['MLJ (Mailjet) IP 1', 'MLJ (Mailjet) IP 2', 'MLJ (Mailjet) IP 3 / SH', 'SEG (Sendgrid) IP 1', 'SEG (Sendgrid) IP 2 / SH'];
       const allKnownEsps = Array.from(new Set([...sortOrder, ...Object.keys(breakdownByEsp)])).filter(e => !isExcludedEsp(e));
 
-      let rawRows = [];
+      const newBreakdownRows = [];
+      let grandSig = 0, grandFtd = 0;
+
       allKnownEsps.forEach(espName => {
         const group = breakdownByEsp[espName] || {};
         const items = Object.values(group).filter(it => (it.signups || 0) > 0 || (it.ftds || 0) > 0);
+        if (items.length === 0) return;
+
         items.sort((a, b) => ((b.signups || 0) + (b.ftds || 0) * 10) - ((a.signups || 0) + (a.ftds || 0) * 10));
-        rawRows.push(...items);
-      });
-
-      // 4. FASE DE CUADRE MAESTRO ABSOLUTO (Elimina cualquier brecha residual multi-mes)
-      let curSumSig = rawRows.reduce((s, it) => s + (it.signups || 0), 0);
-      let curSumFtd = rawRows.reduce((s, it) => s + (it.ftds || 0), 0);
-
-      const diffSig = agg.signups - curSumSig;
-      const diffFtd = agg.users - curSumFtd;
-
-      if (rawRows.length > 0) {
-        if (diffSig !== 0) {
-          allocateDelta(rawRows, Math.abs(diffSig), it => it.signups || 1, (it, val) => {
-            it.signups = Math.max(0, it.signups + (diffSig > 0 ? val : -val));
-          });
-        }
-        if (diffFtd !== 0) {
-          allocateDelta(rawRows, Math.abs(diffFtd), it => it.ftds || it.signups || 1, (it, val) => {
-            it.ftds = Math.max(0, it.ftds + (diffFtd > 0 ? val : -val));
-          });
-        }
-      }
-
-      // 5. Generar filas finales y subtotales por ESP garantizando identidad 1:1
-      const finalBreakdownRows = [];
-      const espTotalsFromBreakdown = {};
-      let finalGrandSig = 0, finalGrandFtd = 0;
-
-      allKnownEsps.forEach(espName => {
-        const groupItems = rawRows.filter(r => r.esp_ip === espName);
-        if (groupItems.length === 0) return;
 
         let subSig = 0, subFtd = 0;
-        groupItems.forEach(it => {
-          finalBreakdownRows.push(it);
+        items.forEach(it => {
+          newBreakdownRows.push(it);
           subSig += (it.signups || 0);
           subFtd += (it.ftds || 0);
         });
 
-        finalBreakdownRows.push({
+        newBreakdownRows.push({
           esp_ip: `GRAND TOTAL ${espName}`,
           advertiser: '',
           brand: '',
@@ -1417,26 +1368,35 @@
           is_total: true
         });
 
-        espTotalsFromBreakdown[espName] = { signups: subSig, ftds: subFtd };
-        finalGrandSig += subSig;
-        finalGrandFtd += subFtd;
+        grandSig += subSig;
+        grandFtd += subFtd;
       });
 
-      if (finalBreakdownRows.length > 0) {
-        finalBreakdownRows.push({
+      if (newBreakdownRows.length > 0) {
+        newBreakdownRows.push({
           esp_ip: 'OVERALL GRAND TOTAL',
           advertiser: '',
           brand: '',
-          signups: finalGrandSig,
-          ftds: finalGrandFtd,
+          signups: grandSig,
+          ftds: grandFtd,
           is_total: true,
           is_overall: true
         });
       }
 
-      agg.esp_ip_breakdown = finalBreakdownRows;
+      agg.esp_ip_breakdown = newBreakdownRows;
 
-      // 6. Actualizar dinámicamente la tabla superior de ESP
+      // 4. Actualizar dinámicamente la tabla superior de ESP con los subtotales reconciliados
+      const espTotalsFromBreakdown = {};
+      newBreakdownRows.forEach(r => {
+        if (r.is_total && !r.is_overall) {
+          const espName = r.esp_ip.replace(/^GRAND TOTAL\s+/i, '').trim();
+          if (!isExcludedEsp(espName)) {
+            espTotalsFromBreakdown[espName] = { signups: r.signups || 0, ftds: r.ftds || 0 };
+          }
+        }
+      });
+
       sortOrder.forEach(espName => {
         if (!csvMap[espName]) {
           csvMap[espName] = {
@@ -1467,8 +1427,8 @@
         agg[k] = agg.esp.reduce((acc, cur) => acc + (cur[k] || 0), 0);
       });
 
-      agg.espSignups = finalGrandSig;
-      agg.espPlayers = finalGrandFtd;
+      agg.espSignups = grandSig;
+      agg.espPlayers = grandFtd;
 
       renderDashboard(agg, currentStartDate, currentEndDate);
     }
