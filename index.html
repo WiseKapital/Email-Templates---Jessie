@@ -886,7 +886,7 @@
         ? espList.map(e => e.esp) 
         : ['SEG (Sendgrid) IP 2 / SH', 'SEG (Sendgrid) IP 1', 'MLJ (Mailjet) IP 2', 'MLJ (Mailjet) IP 1'];
 
-      // 1. Mapear las filas existentes en breakdownByEsp respetando sus números originales
+      // 1. Mapear las filas existentes en breakdownByEsp respetando estrictamente sus números originales
       const breakdownByEsp = {};
       (agg.esp_ip_breakdown || []).forEach(r => {
         if (r.is_total || r.is_overall) return;
@@ -918,7 +918,7 @@
         breakdownByEsp[esp][key].origFtd += ftd;
       });
 
-      // Función de distribución por resto mayor
+      // Función de distribución por cuota de resto mayor (solo > 0)
       const allocateDelta = (items, delta, getWeight, addVal) => {
         if (delta <= 0 || !items || items.length === 0) return;
         const eligible = items.filter(it => (getWeight(it) || 0) > 0);
@@ -946,24 +946,36 @@
         const targetFtd = bData.users || 0;
         const adv = bData.advertiser || '-';
 
+        // Si la marca original viene con 0 y 0, NO procesar
         if (targetSig === 0 && targetFtd === 0) return;
 
-        const matching = [];
+        // Búsqueda prioritaria: 1) por nombre de marca exacto
+        let matching = [];
         Object.entries(breakdownByEsp).forEach(([esp, group]) => {
           Object.values(group).forEach(item => {
-            if (item.brand.toLowerCase() === bName.toLowerCase()) {
+            if (item.brand.trim().toLowerCase() === bName.trim().toLowerCase()) {
               matching.push(item);
             }
           });
         });
 
+        // 2) Si no coincide por marca, buscar filas del MISMO anunciante que ya tengan actividad real
+        if (matching.length === 0) {
+          Object.entries(breakdownByEsp).forEach(([esp, group]) => {
+            Object.values(group).forEach(item => {
+              if (item.advertiser.trim().toLowerCase() === adv.trim().toLowerCase()) {
+                matching.push(item);
+              }
+            });
+          });
+        }
+
         if (matching.length > 0) {
           const curSig = matching.reduce((s, it) => s + (it.signups || 0), 0);
           const curFtd = matching.reduce((s, it) => s + (it.ftds || 0), 0);
 
-          // REGLA SIGNUPS:
-          // 1. Debe haber venido con origSig > 0 (si vino en 0, BLOQUEADA).
-          // 2. La IP debe tener Delivered > 0 (si Delivered es 0, BLOQUEADA DE RECIBIR MÁS).
+          // REGLA PARA SIGNUPS:
+          // Solo filas con origSig > 0 Y que pertenezcan a una IP con Delivered > 0
           if (targetSig > curSig) {
             const deltaSig = targetSig - curSig;
             const sigEligible = matching.filter(it => {
@@ -973,12 +985,10 @@
             if (sigEligible.length > 0) {
               allocateDelta(sigEligible, deltaSig, it => it.origSig, (it, val) => { it.signups += val; });
             }
-            // SIN ELSE: Si todas venían en 0 o con Delivered 0, jamás se les suma nada.
           }
 
-          // REGLA FTDS / PLAYERS:
-          // 1. Debe haber venido con origFtd > 0 (si vino en 0, BLOQUEADA).
-          // 2. La IP debe tener Delivered > 0 (si Delivered es 0, BLOQUEADA DE RECIBIR MÁS).
+          // REGLA PARA FTDS:
+          // Solo filas con origFtd > 0 Y que pertenezcan a una IP con Delivered > 0
           if (targetFtd > curFtd) {
             const deltaFtd = targetFtd - curFtd;
             const ftdEligible = matching.filter(it => {
@@ -988,13 +998,11 @@
             if (ftdEligible.length > 0) {
               allocateDelta(ftdEligible, deltaFtd, it => it.origFtd, (it, val) => { it.ftds += val; });
             }
-            // SIN ELSE: Si todas venían en 0 o con Delivered 0, jamás se les suma nada.
           }
         } else {
-          // Marcas que NO existían en el desglose (ej. CardCrush)
+          // Solo para marcas totalmente huérfanas que NO existen en el desglose (ej. CardCrush)
           if (targetSig === 0 && targetFtd === 0) return;
 
-          // Se asigna SOLO a IPs activas con envíos reales (Delivered > 0)
           const validActiveEsps = activeEsps.filter(esp => (csvMap[esp]?.delivered || 0) > 0);
           if (validActiveEsps.length === 0) return;
 
@@ -1015,6 +1023,19 @@
         }
       });
 
+      // 🔒 CANDADO DE SEGURIDAD ABSOLUTO:
+      // Si una fila venía con origSig == 0 o origFtd == 0 originalmente, se garantiza que quede en 0.
+      Object.values(breakdownByEsp).forEach(group => {
+        Object.values(group).forEach(item => {
+          if ((item.origSig || 0) === 0) {
+            item.signups = 0;
+          }
+          if ((item.origFtd || 0) === 0) {
+            item.ftds = 0;
+          }
+        });
+      });
+
       // 3. Reconstruir filas detalladas de la tabla ESP / IP Breakdown
       const sortOrder = ['MLJ (Mailjet) IP 1', 'MLJ (Mailjet) IP 2', 'MLJ (Mailjet) IP 3 / SH', 'SEG (Sendgrid) IP 1', 'SEG (Sendgrid) IP 2 / SH'];
       const allKnownEsps = Array.from(new Set([...sortOrder, ...Object.keys(breakdownByEsp)])).filter(e => !isExcludedEsp(e));
@@ -1024,7 +1045,7 @@
 
       allKnownEsps.forEach(espName => {
         const group = breakdownByEsp[espName] || {};
-        // Mostrar filas que tengan Signups > 0 o FTDs > 0 (las que quedaron en 0 no se muestran)
+        // Mostrar únicamente filas que tengan conversiones reales > 0
         const items = Object.values(group).filter(it => (it.signups || 0) > 0 || (it.ftds || 0) > 0);
         if (items.length === 0) return;
 
